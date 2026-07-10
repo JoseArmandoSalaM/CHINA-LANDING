@@ -188,7 +188,11 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 
 		const spotlight = document.getElementById('dest-spotlight');
 		const cards = track.querySelectorAll<HTMLElement>('.dest-card');
-		const isTouch = window.matchMedia('(hover: none)').matches;
+		// El click solo debe controlar el volteo en pantallas de móvil: exigimos
+		// touch Y ancho angosto para que en pantallas grandes (aunque el equipo
+		// tenga digitalizador táctil) el click nunca choque con el :hover.
+		const isTouch =
+			window.matchMedia('(hover: none)').matches && window.matchMedia('(max-width: 700px)').matches;
 
 		const syncSpotlight = () => {
 			const hasActive = track.querySelector('.dest-card.is-focused, .dest-card.flipped');
