@@ -1,0 +1,418 @@
+---
+export interface Destination {
+	name: string;
+	nights: string;
+	image: string;
+	activities: string[];
+}
+
+const destinations: Destination[] = [
+	{
+		name: 'ZHANGJIAJIE',
+		nights: '3 NOCHES',
+		image: '/zhangjiajie.webp',
+		activities: [
+			'Montaña Tianmen',
+			'Puente de Cristal',
+			'Parque de la Minoría Tujia',
+			'Reserva Natural de Tianzi',
+			'Puente de Vidrio',
+			'Lago de Baofeng',
+		],
+	},
+	{
+		name: "XI'AN",
+		nights: '2 NOCHES',
+		image: '/xian.webp',
+		activities: [
+			'Taller de Cerámica',
+			'Muralla Antigua de Xi\'an',
+			'Guerreros de Terracota',
+			'Calle Musulmana',
+			'Patio Gao',
+			'Gran Pagoda del Ganso Salvaje',
+		],
+	},
+	{
+		name: 'BEIJING',
+		nights: '3 NOCHES',
+		image: '/beijing.webp',
+		activities: [
+			'Templo del Cielo',
+			'Hutongs',
+			'Ciudad Prohibida',
+			'Palacio de Verano',
+			'Gran Muralla China (Mutianyu)',
+			'Pintura de Máscaras de Ópera',
+		],
+	},
+	{
+		name: 'GUILIN',
+		nights: '3 NOCHES',
+		image: '/guilin.webp',
+		activities: [
+			'Terrazas de Arroz de Longji',
+			'Río Li',
+			'Cueva de la Flauta de Caña',
+			'Colina Trompa de Elefante',
+		],
+	},
+	{
+		name: 'SHANGHÁI',
+		nights: '2 NOCHES',
+		image: '/shanghai.webp',
+		activities: ['Bund', 'Jardín de Yuyuan', 'Torre de la Perla Oriental'],
+	},
+];
+
+// Se triplica la lista para poder hacer scroll infinito en ambas direcciones.
+const loopedDestinations = [...destinations, ...destinations, ...destinations];
+---
+
+<div id="dest-spotlight"></div>
+
+<section id="destinations">
+	<h2 class="sr-only">Nuestros Destinos en China</h2>
+
+	<button id="dest-prev" class="dest-arrow" aria-label="Anterior">
+		<svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+	</button>
+
+	<div id="dest-track">
+		{
+			loopedDestinations.map((dest) => (
+				<div class="dest-card">
+					<div class="dest-card-inner">
+						<div class="dest-face dest-face-front">
+							<div class="dest-bg" style={`background-image: url('${dest.image}')`} />
+							<div class="dest-overlay" />
+							<div class="dest-text">
+								<h3>{dest.name}</h3>
+								<p>{dest.nights}</p>
+							</div>
+						</div>
+						<div class="dest-face dest-face-back">
+							<div class="dest-bg dest-bg-blur" style={`background-image: url('${dest.image}')`} />
+							<div class="dest-back-overlay" />
+							<div class="dest-back-text">
+								<h3>{dest.name}</h3>
+								<ul class="dest-activities">
+									{dest.activities.map((activity) => <li>{activity}</li>)}
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			))
+		}
+	</div>
+
+	<button id="dest-next" class="dest-arrow" aria-label="Siguiente">
+		<svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+	</button>
+</section>
+
+<script>
+	const track = document.getElementById('dest-track') as HTMLElement | null;
+	const prev = document.getElementById('dest-prev');
+	const next = document.getElementById('dest-next');
+
+	if (track) {
+		const step = () => {
+			const card = track.querySelector('.dest-card') as HTMLElement | null;
+			const gap = parseFloat(getComputedStyle(track).columnGap || '20');
+			return (card?.offsetWidth ?? 220) + gap;
+		};
+
+		// Arranca en el segundo bloque (copia central) para poder hacer loop en ambas direcciones.
+		const initLoop = () => {
+			track.scrollLeft = track.scrollWidth / 3;
+		};
+		initLoop();
+		window.addEventListener('resize', initLoop);
+
+		let scrollTimer: ReturnType<typeof setTimeout>;
+		track.addEventListener('scroll', () => {
+			clearTimeout(scrollTimer);
+			scrollTimer = setTimeout(() => {
+				const third = track.scrollWidth / 3;
+				if (track.scrollLeft < third * 0.5) {
+					track.scrollLeft += third;
+				} else if (track.scrollLeft > third * 1.5) {
+					track.scrollLeft -= third;
+				}
+			}, 150);
+		});
+
+		prev?.addEventListener('click', () => {
+			track.scrollBy({ left: -step(), behavior: 'smooth' });
+		});
+
+		next?.addEventListener('click', () => {
+			track.scrollBy({ left: step(), behavior: 'smooth' });
+		});
+
+		let isPaused = false;
+		track.addEventListener('mouseenter', () => {
+			isPaused = true;
+		});
+		track.addEventListener('mouseleave', () => {
+			isPaused = false;
+		});
+
+		setInterval(() => {
+			if (!isPaused) {
+				track.scrollBy({ left: step(), behavior: 'smooth' });
+			}
+		}, 6000);
+
+		const spotlight = document.getElementById('dest-spotlight');
+		const cards = track.querySelectorAll<HTMLElement>('.dest-card');
+		cards.forEach((card) => {
+			card.addEventListener('mouseenter', () => {
+				spotlight?.classList.add('active');
+				card.classList.add('is-focused');
+			});
+			card.addEventListener('mouseleave', () => {
+				spotlight?.classList.remove('active');
+				card.classList.remove('is-focused');
+			});
+		});
+	}
+</script>
+
+<style>
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	#destinations {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		background: #00002e;
+		padding: 0 6vw 40px;
+	}
+
+	#dest-track {
+		flex: 1;
+		display: flex;
+		gap: 20px;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		scrollbar-width: none;
+		padding-bottom: 4px;
+	}
+
+	#dest-track::-webkit-scrollbar {
+		display: none;
+	}
+
+	#dest-spotlight {
+		position: fixed;
+		inset: 0;
+		z-index: 40;
+		opacity: 0;
+		pointer-events: none;
+		background: rgba(0, 0, 46, 0.35);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		transition: opacity 0.3s ease;
+	}
+
+	#dest-spotlight.active {
+		opacity: 1;
+	}
+
+	.dest-card {
+		position: relative;
+		z-index: 1;
+		flex: 0 0 auto;
+		width: calc((100% - 3 * 20px) / 4);
+		aspect-ratio: 3 / 5;
+		perspective: 1200px;
+		scroll-snap-align: start;
+	}
+
+	.dest-card.is-focused {
+		z-index: 41;
+	}
+
+	.dest-card-inner {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		transform-style: preserve-3d;
+		transition: transform 0.6s ease;
+	}
+
+	.dest-card:hover .dest-card-inner {
+		transform: rotateY(180deg);
+	}
+
+	.dest-card.is-focused .dest-face-front {
+		box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+	}
+
+	.dest-face {
+		position: absolute;
+		inset: 0;
+		border-radius: 16px;
+		overflow: hidden;
+		backface-visibility: hidden;
+		-webkit-backface-visibility: hidden;
+	}
+
+	.dest-face-front {
+		background-color: #23234a;
+	}
+
+	.dest-bg {
+		position: absolute;
+		inset: 0;
+		background-size: cover;
+		background-position: center;
+	}
+
+	.dest-overlay {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(180deg, rgba(0, 0, 46, 0) 45%, rgba(0, 0, 46, 0.85) 100%);
+	}
+
+	.dest-text {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		padding: 18px;
+		font-family: 'League Spartan', sans-serif;
+	}
+
+	.dest-text h3 {
+		margin: 0;
+		color: #ffffff;
+		font-weight: 800;
+		font-size: 30px;
+		line-height: 1.1;
+	}
+
+	.dest-text p {
+		margin: 4px 0 0;
+		color: #f4c96b;
+		font-weight: 600;
+		font-size: 15px;
+		letter-spacing: 0.08em;
+	}
+
+	.dest-face-back {
+		transform: rotateY(180deg);
+		background-color: #23234a;
+	}
+
+	.dest-bg-blur {
+		filter: blur(6px);
+		transform: scale(1.15);
+	}
+
+	.dest-back-overlay {
+		position: absolute;
+		inset: 0;
+		background: rgba(0, 0, 46, 0.55);
+	}
+
+	.dest-back-text {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		padding: 22px;
+		box-sizing: border-box;
+		font-family: 'League Spartan', sans-serif;
+	}
+
+	.dest-back-text h3 {
+		margin: 0 0 12px;
+		color: #ffffff;
+		font-weight: 800;
+		font-size: 20px;
+		flex-shrink: 0;
+	}
+
+	.dest-activities {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		width: 100%;
+		text-align: left;
+		display: flex;
+		flex-direction: column;
+		gap: 7px;
+	}
+
+	.dest-activities li {
+		position: relative;
+		padding-left: 16px;
+		color: rgba(255, 255, 255, 0.92);
+		font-size: 13.5px;
+		line-height: 1.35;
+	}
+
+	.dest-activities li::before {
+		content: '•';
+		position: absolute;
+		left: 0;
+		top: 0;
+		color: #f4c96b;
+		font-size: 16px;
+		line-height: 1.2;
+	}
+
+	.dest-arrow {
+		flex: 0 0 auto;
+		width: 44px;
+		height: 44px;
+		border-radius: 50%;
+		border: none;
+		background: rgba(255, 255, 255, 0.18);
+		color: #ffffff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		transition: background 0.2s ease;
+	}
+
+	.dest-arrow:hover {
+		background: rgba(255, 255, 255, 0.32);
+	}
+
+	.dest-arrow svg {
+		width: 22px;
+		height: 22px;
+	}
+
+	@media (max-width: 700px) {
+		.dest-card {
+			width: 200px;
+			height: 360px;
+			aspect-ratio: auto;
+		}
+
+		.dest-arrow {
+			display: none;
+		}
+	}
+</style>

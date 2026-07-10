@@ -1,0 +1,151 @@
+---
+export interface IncludeItem {
+	title: string;
+	description: string;
+	icon: string;
+}
+
+const items: IncludeItem[] = [
+	{
+		title: 'ALOJAMIENTO',
+		description:
+			'13 noches en hoteles de 4 y 5 estrellas en Beijing, Xi\'an, Guilin, Zhangjiajie y Shanghái.',
+		icon: '/alojamiento.png',
+	},
+	{
+		title: 'ALIMENTACIÓN',
+		description: 'Desayunos buffet diarios y 12 almuerzos tradicionales en restaurantes locales.',
+		icon: '/alimentacion.png',
+	},
+	{
+		title: 'TRANSPORTE',
+		description:
+			'2 vuelos internacionales, traslados terrestres compartidos, 2 vuelos domésticos, 2 trayectos en tren de alta velocidad, Teleféricos y elevadores en atracciones seleccionadas.',
+		icon: '/trnasporte.png',
+	},
+	{
+		title: 'ACTIVIDADES',
+		description:
+			'Visitas guiadas a los principales atractivos como la Gran Muralla, Guerreros de Terracota, Río Li, Montaña Tianmen y el Jardín Yuyuan.',
+		icon: '/actividades.png',
+	},
+	{
+		title: 'ATENCIÓN PERSONALIZADA',
+		description:
+			'Servicios de guías expertos en español (excepto Zhangjiajie, donde será en inglés) y conductores privados en cada ciudad.',
+		icon: '/guia.png',
+	},
+];
+---
+
+<section id="includes">
+	<a
+		href="https://api.whatsapp.com/send/?phone=522211201356&text=Hola%2C+quiero+viajar+con+Ala+Libre%2C+quiero+comenzar+ahora&type=phone_number&app_absent=0"
+		target="_blank"
+		rel="noopener noreferrer"
+		class="btn-outline center">Cotizar con un diseñador de viajes</a
+	>
+
+	<h2>LO QUE INCLUYE</h2>
+
+	<div class="includes-grid">
+		{
+			items.map((item) => (
+				<div class="include-card">
+					<span class="include-icon">
+						<img src={item.icon} alt={item.title} loading="lazy" />
+					</span>
+					<h3>{item.title}</h3>
+					<p>{item.description}</p>
+				</div>
+			))
+		}
+	</div>
+</section>
+
+<style>
+	#includes {
+		background: #00002e;
+		padding: 0 4vw 80px;
+		text-align: center;
+		font-family: 'League Spartan', sans-serif;
+	}
+
+	.btn-outline.center {
+		display: inline-block;
+		color: #ffffff;
+		text-decoration: none;
+		font-weight: 700;
+		font-size: clamp(16px, 2vw, 19px);
+		padding: 18px 44px;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.14);
+		border: 1px solid rgba(255, 255, 255, 0.5);
+		margin-bottom: 64px;
+		transition:
+			background 0.2s ease,
+			border-color 0.2s ease;
+	}
+
+	.btn-outline.center:hover {
+		background: rgba(255, 255, 255, 0.28);
+		border-color: #ffffff;
+	}
+
+	#includes h2 {
+		margin: 0 0 40px;
+		color: #ffffff;
+		font-weight: 800;
+		font-size: clamp(24px, 3.4vw, 34px);
+		letter-spacing: 0.02em;
+	}
+
+	.includes-grid {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 40px;
+		max-width: 1600px;
+		margin: 0 auto;
+	}
+
+	.include-card {
+		position: relative;
+		width: 400px;
+		background: #4b4c72;
+		border-radius: 16px;
+		padding: 50px 24px 28px;
+		margin-top: 68px;
+	}
+
+	.include-icon {
+		position: absolute;
+		top: 0;
+		left: 50%;
+		transform: translate(-50%, -75%);
+		display: block;
+	}
+
+	.include-icon img {
+		display: block;
+		width: 100px;
+		height: 100px;
+		object-fit: contain;
+	}
+
+	.include-card h3 {
+		margin: 0 0 12px;
+		color: #ffffff;
+		font-weight: 700;
+		font-size: 21px;
+		letter-spacing: 0.03em;
+	}
+
+	.include-card p {
+		margin: 0;
+		color: rgba(255, 255, 255, 0.85);
+		font-weight: 400;
+		font-size: 15px;
+		line-height: 1.6;
+	}
+</style>

@@ -1,0 +1,142 @@
+---
+const socials = [
+	{
+		name: 'LinkedIn',
+		href: 'https://linkedin.com',
+		path: 'M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3zM9 9h3.8v1.7h.1c.53-1 1.83-2.1 3.77-2.1 4 0 4.7 2.6 4.7 6v6.4h-4v-5.7c0-1.4 0-3.1-1.9-3.1-1.9 0-2.2 1.5-2.2 3v5.8H9z',
+	},
+	{
+		name: 'TikTok',
+		href: 'https://tiktok.com',
+		path: 'M16.5 3c.4 2.2 1.9 3.9 4.5 4.1v3c-1.6 0-3-.5-4.2-1.4v6.8a5.7 5.7 0 1 1-5.7-5.7c.3 0 .6 0 .9.1v3.1a2.7 2.7 0 1 0 1.9 2.6V3z',
+	},
+	{
+		name: 'WhatsApp',
+		href: 'https://wa.me/',
+		path: 'M12 3a9 9 0 0 0-7.7 13.6L3 21l4.5-1.3A9 9 0 1 0 12 3zm0 2a7 7 0 0 1 5.9 10.7l-.2.4.6 2.3-2.3-.6-.4.2A7 7 0 1 1 12 5zm-2.9 3.5c-.2 0-.5 0-.6.3-.2.3-.8.8-.8 1.9s.8 2.2.9 2.4c.1.1 1.6 2.6 4 3.5 2 .8 2.4.6 2.8.6.4 0 1.4-.6 1.6-1.1.2-.5.2-1 .1-1.1-.1-.1-.2-.2-.5-.3l-1.6-.8c-.2-.1-.4-.1-.6.1l-.6.8c-.1.2-.3.2-.5.1-.3-.1-1.1-.4-2-1.3-.8-.7-1.3-1.6-1.4-1.9-.1-.2 0-.4.1-.5l.5-.6c.1-.2.2-.3.1-.5l-.8-1.8c-.1-.3-.3-.3-.5-.3z',
+	},
+	{
+		name: 'Instagram',
+		href: 'https://instagram.com',
+		path: 'M8 3h8a5 5 0 0 1 5 5v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3zm4 3.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM17.7 6.3a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2z',
+	},
+	{
+		name: 'Facebook',
+		href: 'https://facebook.com',
+		path: 'M13.5 21v-7.5H16l.4-3H13.5V8.4c0-.9.2-1.5 1.6-1.5H16.5V4.2C16.2 4.2 15.2 4 14 4c-2.4 0-4 1.5-4 4.1v2.4H7.5v3H10V21z',
+	},
+	{
+		name: 'Correo',
+		href: 'mailto:info@alalibre.com',
+		path: 'M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1.4 2 6.6 5.5L18.6 7zM19 8.4l-6.4 5.3a1 1 0 0 1-1.2 0L5 8.4V17h14z',
+	},
+];
+---
+
+<footer id="site-footer">
+	<img class="footer-logo" src="/IsotipoBlanco.png" alt="Ala Libre" loading="lazy" />
+
+	<p class="footer-tagline">
+		¡Síguenos en redes sociales y descubre destinos, consejos de viaje y mucho más! ¡Inspírate y
+		planea tu próxima aventura!
+	</p>
+
+	<div class="footer-socials">
+		{
+			socials.map((s) => (
+				<a href={s.href} aria-label={s.name} target="_blank" rel="noopener noreferrer">
+					<svg viewBox="0 0 24 24" fill="currentColor">
+						<path d={s.path} />
+					</svg>
+				</a>
+			))
+		}
+	</div>
+
+	<p class="footer-address">
+		5 de Mayo 1004, 12 Oriente, Tentla, Plaza La Joya, 72810, San Andrés Cholula, Puebla, México
+	</p>
+
+	<a class="footer-terms" href="#">CONSULTAR TÉRMINOS Y CONDICIONES</a>
+
+	<p class="footer-copy">Copyright © ALA LIBRE 2025</p>
+</footer>
+
+<style>
+	#site-footer {
+		background: #0a0a1a;
+		border-top: 1px solid rgba(255, 255, 255, 0.08);
+		padding: 48px 6vw 24px;
+		text-align: center;
+		font-family: 'League Spartan', sans-serif;
+	}
+
+	.footer-logo {
+		height: 56px;
+		width: auto;
+		margin-bottom: 16px;
+	}
+
+	.footer-tagline {
+		max-width: 640px;
+		margin: 0 auto 20px;
+		color: rgba(255, 255, 255, 0.85);
+		font-size: 14px;
+		line-height: 1.6;
+	}
+
+	.footer-socials {
+		display: flex;
+		justify-content: center;
+		gap: 16px;
+		margin-bottom: 20px;
+	}
+
+	.footer-socials a {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.1);
+		color: #ffffff;
+		transition: background 0.2s ease;
+	}
+
+	.footer-socials a:hover {
+		background: rgba(255, 255, 255, 0.24);
+	}
+
+	.footer-socials svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	.footer-address {
+		margin: 0 0 10px;
+		color: rgba(255, 255, 255, 0.6);
+		font-size: 12.5px;
+	}
+
+	.footer-terms {
+		display: inline-block;
+		margin-bottom: 16px;
+		color: rgba(255, 255, 255, 0.6);
+		font-size: 11.5px;
+		letter-spacing: 0.05em;
+		text-decoration: none;
+	}
+
+	.footer-terms:hover {
+		color: #ffffff;
+	}
+
+	.footer-copy {
+		margin: 0;
+		padding-top: 16px;
+		border-top: 1px solid rgba(255, 255, 255, 0.08);
+		color: rgba(255, 255, 255, 0.45);
+		font-size: 11.5px;
+	}
+</style>
