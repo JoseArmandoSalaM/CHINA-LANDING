@@ -2,7 +2,7 @@
 ---
 
 <section id="contacto">
-	<div class="contact-media" style="background-image: url('/montadragon.webp')">
+	<div class="contact-media" style="background-image: url('/montadragon-desktop.webp')">
 		<div class="contact-overlay"></div>
 	</div>
 
@@ -256,6 +256,10 @@
 	}
 
 	@media (max-width: 700px) {
+		.contact-media {
+			background-image: url('/montadragon-mobile.webp') !important;
+		}
+
 		.contact-inner {
 			padding: 64px 6vw;
 		}
