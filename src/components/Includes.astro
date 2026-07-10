@@ -111,6 +111,7 @@ const items: IncludeItem[] = [
 
 	.include-card {
 		position: relative;
+		box-sizing: border-box;
 		width: 400px;
 		background: #4b4c72;
 		border-radius: 16px;
@@ -147,5 +148,31 @@ const items: IncludeItem[] = [
 		font-weight: 400;
 		font-size: 15px;
 		line-height: 1.6;
+	}
+
+	@media (max-width: 700px) {
+		.includes-grid {
+			gap: 16px;
+		}
+
+		.include-card {
+			width: calc(50% - 8px);
+			margin-top: 46px;
+			padding: 38px 12px 18px;
+		}
+
+		.include-icon img {
+			width: 56px;
+			height: 56px;
+		}
+
+		.include-card h3 {
+			font-size: 13.5px;
+		}
+
+		.include-card p {
+			font-size: 12px;
+			line-height: 1.45;
+		}
 	}
 </style>
