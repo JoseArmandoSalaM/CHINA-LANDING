@@ -15,7 +15,10 @@ const links: NavLink[] = [
 <header id="menu">
 	<div class="menu-inner">
 		<a href="/" class="logo">
-			<img src="/IsotipoBlanco.png" alt="Ala Libre" />
+			<picture>
+				<source media="(max-width: 700px)" srcset="/logoblanco.png" />
+				<img src="/IsotipoBlanco.png" alt="Ala Libre" />
+			</picture>
 		</a>
 
 		<div class="menu-toggle-wrap">
@@ -230,13 +233,19 @@ const links: NavLink[] = [
 			right: 20px;
 		}
 
+		.logo {
+			top: 20px;
+			left: 16px;
+			transform: none;
+		}
+
 		#nav-links {
 			width: min(300px, calc(100vw - 24px));
 			padding-top: 60px;
 		}
 
 		.logo img {
-			height: 84px;
+			height: 46px;
 		}
 
 		#menu-toggle {
