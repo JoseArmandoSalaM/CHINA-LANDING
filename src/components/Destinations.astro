@@ -190,33 +190,87 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 		const cards = track.querySelectorAll<HTMLElement>('.dest-card');
 		const isTouch = window.matchMedia('(hover: none)').matches;
 
-		cards.forEach((card) => {
-			card.addEventListener('mouseenter', () => {
-				spotlight?.classList.add('active');
-				card.classList.add('is-focused');
+		const syncSpotlight = () => {
+			const hasActive = track.querySelector('.dest-card.is-focused, .dest-card.flipped');
+			spotlight?.classList.toggle('active', Boolean(hasActive));
+		};
+
+		const closeFlipped = () => {
+			cards.forEach((c) => c.classList.remove('flipped', 'is-focused'));
+			syncSpotlight();
+			isPaused = false;
+		};
+
+		let leaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+		if (!isTouch) {
+			cards.forEach((card) => {
+				card.addEventListener('mouseenter', () => {
+					if (leaveTimer) {
+						clearTimeout(leaveTimer);
+						leaveTimer = null;
+					}
+					card.classList.add('is-focused');
+					syncSpotlight();
+				});
+				card.addEventListener('mouseleave', () => {
+					card.classList.remove('is-focused');
+					leaveTimer = setTimeout(() => {
+						syncSpotlight();
+						leaveTimer = null;
+					}, 120);
+				});
 			});
-			card.addEventListener('mouseleave', () => {
-				spotlight?.classList.remove('active');
-				card.classList.remove('is-focused');
-			});
-		});
+		}
 
 		// En pantallas táctiles no hay :hover, así que el volteo se controla con toque.
 		if (isTouch) {
+			let isCentering = false;
+			let centeringTimer: ReturnType<typeof setTimeout>;
+
 			cards.forEach((card) => {
-				card.addEventListener('click', () => {
+				card.addEventListener('click', (e) => {
+					const openCard = track.querySelector<HTMLElement>('.dest-card.flipped');
+
+					// Si ya hay otra tarjeta abierta, este toque solo la cierra
+					// (no abre de una vez la que se tocó, evita el "salto" entre cards).
+					if (openCard && openCard !== card) {
+						e.stopPropagation();
+						closeFlipped();
+						return;
+					}
+
 					const willFlip = !card.classList.contains('flipped');
-					cards.forEach((c) => {
-						c.classList.remove('flipped', 'is-focused');
-					});
+					closeFlipped();
 					if (willFlip) {
 						card.classList.add('flipped', 'is-focused');
-						spotlight?.classList.add('active');
-					} else {
-						spotlight?.classList.remove('active');
+						syncSpotlight();
+						isPaused = true; // no dejar que el auto-scroll se lleve la tarjeta abierta
+
+						isCentering = true;
+						clearTimeout(centeringTimer);
+						card.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+						centeringTimer = setTimeout(() => {
+							isCentering = false;
+						}, 700);
 					}
-					card.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 				});
+			});
+
+			// Tocar fuera de cualquier tarjeta también cierra la que esté abierta.
+			document.addEventListener('click', (e) => {
+				const openCard = track.querySelector('.dest-card.flipped');
+				if (openCard && !(e.target as HTMLElement).closest('.dest-card')) {
+					closeFlipped();
+				}
+			});
+
+			// Si el usuario desliza el carrusel manualmente con una tarjeta abierta, se cierra
+			// (evita que el blur se quede activo mientras se ven otras tarjetas fuera de foco).
+			track.addEventListener('scroll', () => {
+				if (!isCentering && track.querySelector('.dest-card.flipped')) {
+					closeFlipped();
+				}
 			});
 		}
 	}
