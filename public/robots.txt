@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://alalibreagency.com/sitemap.xml
+Sitemap: https://china.alalibreagency.com/sitemap.xml

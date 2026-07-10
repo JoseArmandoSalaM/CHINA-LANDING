@@ -11,7 +11,7 @@ const {
 	image = '/rioli-desktop.webp',
 } = Astro.props;
 
-const siteUrl = Astro.site ?? new URL('https://alalibreagency.com');
+const siteUrl = Astro.site ?? new URL('https://china.alalibreagency.com');
 const canonicalURL = new URL(Astro.url.pathname, siteUrl);
 const ogImageURL = new URL(image, siteUrl);
 ---
