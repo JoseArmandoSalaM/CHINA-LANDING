@@ -188,11 +188,12 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 
 		const spotlight = document.getElementById('dest-spotlight');
 		const cards = track.querySelectorAll<HTMLElement>('.dest-card');
-		// El click solo debe controlar el volteo en pantallas de móvil: exigimos
-		// touch Y ancho angosto para que en pantallas grandes (aunque el equipo
-		// tenga digitalizador táctil) el click nunca choque con el :hover.
+		// El click solo debe controlar el volteo en pantallas de móvil/tablet:
+		// exigimos touch Y ancho menor al de una laptop, para que en pantallas
+		// grandes (aunque el equipo tenga digitalizador táctil) el click nunca
+		// choque con el :hover. 1024px cubre tablets (iPad y similares).
 		const isTouch =
-			window.matchMedia('(hover: none)').matches && window.matchMedia('(max-width: 700px)').matches;
+			window.matchMedia('(hover: none)').matches && window.matchMedia('(max-width: 1024px)').matches;
 
 		const syncSpotlight = () => {
 			const hasActive = track.querySelector('.dest-card.is-focused, .dest-card.flipped');
@@ -573,19 +574,21 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 		height: 22px;
 	}
 
-	@media (max-width: 700px) {
-		.dest-card {
-			width: 200px;
-			height: 360px;
-			aspect-ratio: auto;
-		}
-
+	@media (max-width: 1024px) and (hover: none) {
 		.dest-arrow {
 			display: none;
 		}
 
 		.dest-tap-hint {
 			display: flex;
+		}
+	}
+
+	@media (max-width: 700px) {
+		.dest-card {
+			width: 200px;
+			height: 360px;
+			aspect-ratio: auto;
 		}
 	}
 </style>
