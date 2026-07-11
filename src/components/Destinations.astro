@@ -188,20 +188,25 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 
 		const spotlight = document.getElementById('dest-spotlight');
 		const cards = track.querySelectorAll<HTMLElement>('.dest-card');
-		// El click solo debe controlar el volteo en pantallas de móvil/tablet:
-		// exigimos touch Y ancho menor al de una laptop, para que en pantallas
-		// grandes (aunque el equipo tenga digitalizador táctil) el click nunca
-		// choque con el :hover. 1024px cubre tablets (iPad y similares).
-		const isTouch =
-			window.matchMedia('(hover: none)').matches && window.matchMedia('(max-width: 1024px)').matches;
+		// Un iPad Pro 12.9" en horizontal mide 1366px de ancho: la misma resolución
+		// que una laptop común. No hay un ancho confiable para distinguir tablet de
+		// laptop, así que usamos solo si el dispositivo tiene hover real o no.
+		const isTouch = window.matchMedia('(hover: none)').matches;
 
+		// El z-index/sombra de la tarjeta viven en CSS puro, atados directamente a
+		// :hover y a .flipped (ver estilos abajo) — así nunca se pueden desincronizar
+		// del giro visual real, sin importar qué dispositivo/mecanismo lo dispare.
 		const syncSpotlight = () => {
-			const hasActive = track.querySelector('.dest-card.is-focused, .dest-card.flipped');
+			// En touch, un tap puede dejar el elemento en un :hover "pegado" del
+			// navegador, así que ahí el spotlight depende solo de .flipped (nunca
+			// de :hover) para poder apagarse correctamente al tocar de nuevo.
+			const hoverMatch = !isTouch && track.querySelector('.dest-card:hover');
+			const hasActive = hoverMatch || track.querySelector('.dest-card.flipped');
 			spotlight?.classList.toggle('active', Boolean(hasActive));
 		};
 
 		const closeFlipped = () => {
-			cards.forEach((c) => c.classList.remove('flipped', 'is-focused'));
+			cards.forEach((c) => c.classList.remove('flipped'));
 			syncSpotlight();
 			isPaused = false;
 		};
@@ -217,11 +222,9 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 						clearTimeout(leaveTimer);
 						leaveTimer = null;
 					}
-					card.classList.add('is-focused');
 					syncSpotlight();
 				});
 				card.addEventListener('mouseleave', () => {
-					card.classList.remove('is-focused');
 					leaveTimer = setTimeout(() => {
 						syncSpotlight();
 						leaveTimer = null;
@@ -250,7 +253,7 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 					const willFlip = !card.classList.contains('flipped');
 					closeFlipped();
 					if (willFlip) {
-						card.classList.add('flipped', 'is-focused');
+						card.classList.add('flipped');
 						syncSpotlight();
 						isPaused = true; // no dejar que el auto-scroll se lleve la tarjeta abierta
 
@@ -345,7 +348,7 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 		scroll-snap-align: start;
 	}
 
-	.dest-card.is-focused {
+	.dest-card.flipped {
 		z-index: 41;
 	}
 
@@ -361,14 +364,22 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 		transform: rotateY(180deg);
 	}
 
+	.dest-card.flipped .dest-face-front {
+		box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+	}
+
 	@media (hover: hover) {
+		.dest-card:hover {
+			z-index: 41;
+		}
+
 		.dest-card:hover .dest-card-inner {
 			transform: rotateY(180deg);
 		}
-	}
 
-	.dest-card.is-focused .dest-face-front {
-		box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+		.dest-card:hover .dest-face-front {
+			box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+		}
 	}
 
 	.dest-tap-hint {
@@ -408,8 +419,7 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 		white-space: nowrap;
 	}
 
-	.dest-card.flipped .dest-tap-hint,
-	.dest-card.is-focused .dest-tap-hint {
+	.dest-card.flipped .dest-tap-hint {
 		opacity: 0;
 	}
 
@@ -574,7 +584,7 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 		height: 22px;
 	}
 
-	@media (max-width: 1024px) and (hover: none) {
+	@media (hover: none) {
 		.dest-arrow {
 			display: none;
 		}
