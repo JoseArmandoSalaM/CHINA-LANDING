@@ -332,6 +332,13 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 		backdrop-filter: blur(8px);
 		-webkit-backdrop-filter: blur(8px);
 		transition: opacity 0.3s ease;
+		/* Fuerza a Safari/WKWebView (el navegador dentro de WhatsApp) a crear la
+		   capa de composición desde el inicio, no hasta la primera vez que se
+		   activa — evita el bug donde el blur se queda "pegado" sobre toda la
+		   página la primera vez que se usa. */
+		will-change: opacity;
+		transform: translateZ(0);
+		-webkit-transform: translateZ(0);
 	}
 
 	#dest-spotlight.active {

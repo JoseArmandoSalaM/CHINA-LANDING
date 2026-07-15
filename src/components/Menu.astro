@@ -105,6 +105,10 @@ const links: NavLink[] = [
 		top: 28px;
 		right: 20px;
 		z-index: 100;
+		/* Su propia capa de composición: evita que quede afectado si algún
+		   backdrop-filter (como el blur de Destinos) tiene un glitch de WebKit. */
+		transform: translateZ(0);
+		-webkit-transform: translateZ(0);
 	}
 
 	#menu-toggle {

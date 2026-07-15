@@ -83,7 +83,7 @@
 			const result = await res.json();
 			if (!res.ok || !result.success) throw new Error('request failed');
 
-			window.open(`https://api.whatsapp.com/send/?phone=522482409893&text=${waText}&type=phone_number&app_absent=0`, '_blank');
+			window.open(`https://api.whatsapp.com/send/?phone=522211201356&text=${waText}&type=phone_number&app_absent=0`, '_blank');
 
 			if (status) status.textContent = '¡Gracias! Te contactaremos pronto.';
 			form.reset();
