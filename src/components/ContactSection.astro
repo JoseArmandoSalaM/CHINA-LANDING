@@ -10,6 +10,7 @@
 		<div class="contact-panel">
 			<div class="contact-intro">
 				<h2>¡ABRE TUS ALAS!</h2>
+
 				<p>
 					Completa el siguiente formulario y un diseñador de viajes te compartirá el itinerario
 					completo.
@@ -17,27 +18,57 @@
 			</div>
 
 			<form id="contact-form" class="contact-form">
-				<input type="hidden" name="access_key" value="7809a023-af6b-4dd7-88da-029b9309dc75" />
-				<input type="hidden" name="subject" value="Nueva solicitud de viaje - Ala Libre" />
-				<input type="hidden" name="from_name" value="Formulario Ala Libre China" />
+				<input
+					type="hidden"
+					name="access_key"
+					value="7809a023-af6b-4dd7-88da-029b9309dc75"
+				/>
+
+				<input
+					type="hidden"
+					name="subject"
+					value="Nueva solicitud de viaje - Ala Libre"
+				/>
+
+				<input
+					type="hidden"
+					name="from_name"
+					value="Formulario Ala Libre China"
+				/>
 
 				<label>
 					<span>NOMBRE:</span>
-					<input type="text" name="nombre" required />
+
+					<input
+						type="text"
+						name="nombre"
+						required
+					/>
 				</label>
 
 				<label>
 					<span>CORREO:</span>
-					<input type="email" name="correo" required />
+
+					<input
+						type="email"
+						name="correo"
+						required
+					/>
 				</label>
 
 				<label>
 					<span>WHATSAPP:</span>
-					<input type="tel" name="whatsapp" required />
+
+					<input
+						type="tel"
+						name="whatsapp"
+						required
+					/>
 				</label>
 
 				<label>
 					<span>DESTINO Y DETALLES DEL VIAJE:</span>
+
 					<textarea
 						name="detalles"
 						rows="2"
@@ -45,7 +76,26 @@
 					></textarea>
 				</label>
 
-				<button type="submit" class="btn-outline">Enviar</button>
+				<!-- AVISO DE PRIVACIDAD OBLIGATORIO -->
+				<label class="privacy-consent">
+					<input
+						class="privacy-consent__input"
+						type="checkbox"
+						name="acepta_aviso_privacidad"
+						value="Sí"
+						required
+					/>
+
+					<span class="privacy-consent__text">
+						Acepto el aviso de privacidad y el uso de mis datos para recibir información sobre
+						el viaje.
+					</span>
+				</label>
+
+				<button type="submit" class="btn-outline">
+					Enviar
+				</button>
+
 				<p id="contact-form-status" class="contact-form-status"></p>
 			</form>
 		</div>
@@ -59,38 +109,73 @@
 	form?.addEventListener('submit', async (e) => {
 		e.preventDefault();
 
+		/*
+			Impide el envío cuando falta algún campo obligatorio
+			o cuando no se ha aceptado el aviso de privacidad.
+		*/
+		if (!form.checkValidity()) {
+			form.reportValidity();
+			return;
+		}
+
 		const data = new FormData(form);
+
 		const nombre = String(data.get('nombre') || '');
 		const correo = String(data.get('correo') || '');
 		const whatsapp = String(data.get('whatsapp') || '');
 		const detalles = String(data.get('detalles') || '');
 
-		const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement | null;
-		if (submitBtn) submitBtn.disabled = true;
-		if (status) status.textContent = 'Enviando...';
+		const submitBtn = form.querySelector(
+			'button[type="submit"]'
+		) as HTMLButtonElement | null;
+
+		if (submitBtn) {
+			submitBtn.disabled = true;
+		}
+
+		if (status) {
+			status.textContent = 'Enviando...';
+		}
 
 		const waText = encodeURIComponent(
-			`Hola, quiero viajar con Ala Libre.\nNombre: ${nombre}\nCorreo: ${correo}\nWhatsApp: ${whatsapp}\nDetalles: ${detalles}`
+			`Hola, quiero viajar con Ala Libre.\nNombre: ${nombre}\nCorreo: ${correo}\nWhatsApp: ${whatsapp}\nDetalles: ${detalles}\nAviso de privacidad: Aceptado`
 		);
 
 		try {
 			const res = await fetch('https://api.web3forms.com/submit', {
 				method: 'POST',
-				headers: { Accept: 'application/json' },
+				headers: {
+					Accept: 'application/json',
+				},
 				body: data,
 			});
 
 			const result = await res.json();
-			if (!res.ok || !result.success) throw new Error('request failed');
 
-			window.open(`https://api.whatsapp.com/send/?phone=522211201356&text=${waText}&type=phone_number&app_absent=0`, '_blank');
+			if (!res.ok || !result.success) {
+				throw new Error('request failed');
+			}
 
-			if (status) status.textContent = '¡Gracias! Te contactaremos pronto.';
+			window.open(
+				`https://api.whatsapp.com/send/?phone=522211201356&text=${waText}&type=phone_number&app_absent=0`,
+				'_blank'
+			);
+
+			if (status) {
+				status.textContent = '¡Gracias! Te contactaremos pronto.';
+			}
+
 			form.reset();
 		} catch (err) {
-			if (status) status.textContent = 'Hubo un error al enviar, intenta de nuevo.';
+			console.error(err);
+
+			if (status) {
+				status.textContent = 'Hubo un error al enviar, intenta de nuevo.';
+			}
 		} finally {
-			if (submitBtn) submitBtn.disabled = false;
+			if (submitBtn) {
+				submitBtn.disabled = false;
+			}
 		}
 	});
 </script>
@@ -218,6 +303,48 @@
 		border-color: rgba(255, 255, 255, 0.6);
 	}
 
+	/* Casilla del aviso de privacidad */
+
+	.contact-form .privacy-consent {
+		grid-column: 1 / -1;
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+		width: 100%;
+		margin: -3px 0 -5px;
+		gap: 8px;
+		cursor: pointer;
+	}
+
+	.contact-form .privacy-consent__input {
+		appearance: auto;
+		-webkit-appearance: checkbox;
+		width: 15px;
+		height: 15px;
+		margin: 1px 0 0;
+		padding: 0;
+		flex: 0 0 15px;
+		border: 0;
+		border-radius: 2px;
+		background: transparent;
+		accent-color: #ffffff;
+		cursor: pointer;
+	}
+
+	.contact-form .privacy-consent__input:focus {
+		outline: 2px solid rgba(255, 255, 255, 0.8);
+		outline-offset: 2px;
+	}
+
+	.contact-form .privacy-consent__text {
+		color: rgba(255, 255, 255, 0.9);
+		font-size: 12px;
+		font-weight: 400;
+		letter-spacing: 0;
+		line-height: 1.35;
+		text-align: left;
+	}
+
 	.contact-form .btn-outline {
 		grid-column: 1 / -1;
 		justify-self: center;
@@ -275,6 +402,22 @@
 		.contact-form label:nth-of-type(3),
 		.contact-form label:nth-of-type(4) {
 			grid-column: auto;
+		}
+
+		.contact-form .privacy-consent {
+			grid-column: auto;
+			margin-top: -2px;
+			margin-bottom: -4px;
+		}
+
+		.contact-form .privacy-consent__input {
+			width: 14px;
+			height: 14px;
+			flex-basis: 14px;
+		}
+
+		.contact-form .privacy-consent__text {
+			font-size: 11px;
 		}
 	}
 </style>
