@@ -2,187 +2,48 @@
 ---
 
 <section id="contacto">
-	<div class="contact-media" style="background-image: url('/montadragon-desktop.webp')">
+	<div
+		class="contact-media"
+		style="background-image: url('/montadragon-desktop.webp')"
+	>
 		<div class="contact-overlay"></div>
 	</div>
 
 	<div class="contact-inner">
 		<div class="contact-panel">
-			<div class="contact-intro">
-				<h2>¡ABRE TUS ALAS!</h2>
-
-				<p>
-					Completa el siguiente formulario y un diseñador de viajes te compartirá el itinerario
-					completo.
-				</p>
-			</div>
-
-			<form id="contact-form" class="contact-form">
-				<input
-					type="hidden"
-					name="access_key"
-					value="7809a023-af6b-4dd7-88da-029b9309dc75"
-				/>
-
-				<input
-					type="hidden"
-					name="subject"
-					value="Nueva solicitud de viaje - Ala Libre"
-				/>
-
-				<input
-					type="hidden"
-					name="from_name"
-					value="Formulario Ala Libre China"
-				/>
-
-				<label>
-					<span>NOMBRE:</span>
-
-					<input
-						type="text"
-						name="nombre"
-						required
-					/>
-				</label>
-
-				<label>
-					<span>CORREO:</span>
-
-					<input
-						type="email"
-						name="correo"
-						required
-					/>
-				</label>
-
-				<label>
-					<span>WHATSAPP:</span>
-
-					<input
-						type="tel"
-						name="whatsapp"
-						required
-					/>
-				</label>
-
-				<label>
-					<span>DESTINO Y DETALLES DEL VIAJE:</span>
-
-					<textarea
-						name="detalles"
-						rows="2"
-						placeholder="Quiero ir a China en noviembre, mi presupuesto es de..."
-					></textarea>
-				</label>
-
-				<!-- AVISO DE PRIVACIDAD OBLIGATORIO -->
-				<label class="privacy-consent">
-					<input
-						class="privacy-consent__input"
-						type="checkbox"
-						name="acepta_aviso_privacidad"
-						value="Sí"
-						required
-					/>
-
-					<span class="privacy-consent__text">
-						Acepto el aviso de privacidad y el uso de mis datos para recibir información sobre
-						el viaje.
-					</span>
-				</label>
-
-				<button type="submit" class="btn-outline">
-					Enviar
-				</button>
-
-				<p id="contact-form-status" class="contact-form-status"></p>
-			</form>
+		<iframe
+    src="https://api.ikigai.com.ec/widget/form/GV4BI0LfXJmcXWOm8jvx"
+    style="width:100%;height:100%;border:none;border-radius:30px"
+    id="inline-GV4BI0LfXJmcXWOm8jvx" 
+    data-layout="{'id':'INLINE'}"
+    data-trigger-type="alwaysShow"
+    data-trigger-value=""
+    data-activation-type="alwaysActivated"
+    data-activation-value=""
+    data-deactivation-type="neverDeactivate"
+    data-deactivation-value=""
+    data-form-name="Form Web Contacto"
+    data-height="763"
+    data-layout-iframe-id="inline-GV4BI0LfXJmcXWOm8jvx"
+    data-form-id="GV4BI0LfXJmcXWOm8jvx"
+    title="Form Web Contacto"
+    
+        >
+</iframe>
+<script src="https://api.ikigai.com.ec/js/form_embed.js"></script>
 		</div>
 	</div>
 </section>
 
-<script>
-	const form = document.getElementById('contact-form') as HTMLFormElement | null;
-	const status = document.getElementById('contact-form-status');
-
-	form?.addEventListener('submit', async (e) => {
-		e.preventDefault();
-
-		/*
-			Impide el envío cuando falta algún campo obligatorio
-			o cuando no se ha aceptado el aviso de privacidad.
-		*/
-		if (!form.checkValidity()) {
-			form.reportValidity();
-			return;
-		}
-
-		const data = new FormData(form);
-
-		const nombre = String(data.get('nombre') || '');
-		const correo = String(data.get('correo') || '');
-		const whatsapp = String(data.get('whatsapp') || '');
-		const detalles = String(data.get('detalles') || '');
-
-		const submitBtn = form.querySelector(
-			'button[type="submit"]'
-		) as HTMLButtonElement | null;
-
-		if (submitBtn) {
-			submitBtn.disabled = true;
-		}
-
-		if (status) {
-			status.textContent = 'Enviando...';
-		}
-
-		const waText = encodeURIComponent(
-			`Hola, quiero viajar con Ala Libre.\nNombre: ${nombre}\nCorreo: ${correo}\nWhatsApp: ${whatsapp}\nDetalles: ${detalles}\nAviso de privacidad: Aceptado`
-		);
-
-		try {
-			const res = await fetch('https://api.web3forms.com/submit', {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-				},
-				body: data,
-			});
-
-			const result = await res.json();
-
-			if (!res.ok || !result.success) {
-				throw new Error('request failed');
-			}
-
-			window.open(
-				`https://api.whatsapp.com/send/?phone=522211201356&text=${waText}&type=phone_number&app_absent=0`,
-				'_blank'
-			);
-
-			if (status) {
-				status.textContent = '¡Gracias! Te contactaremos pronto.';
-			}
-
-			form.reset();
-		} catch (err) {
-			console.error(err);
-
-			if (status) {
-				status.textContent = 'Hubo un error al enviar, intenta de nuevo.';
-			}
-		} finally {
-			if (submitBtn) {
-				submitBtn.disabled = false;
-			}
-		}
-	});
-</script>
+<script
+	src="https://api.ikigai.com.ec/js/form_embed.js"
+	is:inline
+></script>
 
 <style>
 	#contacto {
 		position: relative;
+		min-height: 100vh;
 		background-color: #00002e;
 		overflow: hidden;
 		font-family: 'League Spartan', sans-serif;
@@ -193,6 +54,7 @@
 		inset: 0;
 		background-size: cover;
 		background-position: center;
+		background-repeat: no-repeat;
 		background-color: #12122f;
 	}
 
@@ -212,174 +74,38 @@
 		position: relative;
 		z-index: 2;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		max-width: 760px;
-		margin: 0 0 0 auto;
-		padding: 90px 6vw;
+		justify-content: flex-end;
+		width: 100%;
 		min-height: 100vh;
+		padding: 70px 6vw;
 		box-sizing: border-box;
-		justify-content: center;
 	}
 
 	.contact-panel {
+		width: min(100%, 680px);
+		height: 761px;
+		border-radius: 30px;
+		overflow: hidden;
+	}
+
+	.contact-panel iframe {
+		display: block;
 		width: 100%;
-		display: flex;
-		flex-direction: column;
-		gap: 28px;
-		background: rgba(0, 0, 0, 0.5);
-		border: 1px solid rgba(255, 255, 255, 0.12);
-		border-radius: 18px;
-		padding: 36px;
-		box-sizing: border-box;
+		height: 100%;
+		border: none;
+		border-radius: 30px;
 	}
 
-	.contact-intro {
-		flex: none;
-		text-align: center;
-	}
+	@media (max-width: 900px) {
+		.contact-inner {
+			justify-content: center;
+			padding: 60px 5vw;
+		}
 
-	.contact-intro h2 {
-		margin: 0 0 16px;
-		color: #ffffff;
-		font-weight: 800;
-		font-size: clamp(30px, 4.2vw, 44px);
-	}
-
-	.contact-intro p {
-		margin: 0 auto;
-		color: rgba(255, 255, 255, 0.9);
-		font-size: 17px;
-		line-height: 1.6;
-		max-width: 380px;
-	}
-
-	.contact-form {
-		flex: none;
-		width: 100%;
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 20px 24px;
-	}
-
-	.contact-form label {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-
-	.contact-form label:nth-of-type(3),
-	.contact-form label:nth-of-type(4) {
-		grid-column: 1 / -1;
-	}
-
-	.contact-form span {
-		color: #ffffff;
-		font-weight: 700;
-		font-size: 15px;
-		letter-spacing: 0.06em;
-	}
-
-	.contact-form input,
-	.contact-form textarea {
-		background: rgba(0, 0, 0, 0.55);
-		border: 1px solid rgba(255, 255, 255, 0.15);
-		border-radius: 8px;
-		color: #ffffff;
-		font-family: 'League Spartan', sans-serif;
-		font-size: 17px;
-		padding: 14px 16px;
-		resize: none;
-	}
-
-	.contact-form input::placeholder,
-	.contact-form textarea::placeholder {
-		color: rgba(255, 255, 255, 0.55);
-	}
-
-	.contact-form input:focus,
-	.contact-form textarea:focus {
-		outline: none;
-		border-color: rgba(255, 255, 255, 0.6);
-	}
-
-	/* Casilla del aviso de privacidad */
-
-	.contact-form .privacy-consent {
-		grid-column: 1 / -1;
-		display: flex;
-		flex-direction: row;
-		align-items: flex-start;
-		width: 100%;
-		margin: -3px 0 -5px;
-		gap: 8px;
-		cursor: pointer;
-	}
-
-	.contact-form .privacy-consent__input {
-		appearance: auto;
-		-webkit-appearance: checkbox;
-		width: 15px;
-		height: 15px;
-		margin: 1px 0 0;
-		padding: 0;
-		flex: 0 0 15px;
-		border: 0;
-		border-radius: 2px;
-		background: transparent;
-		accent-color: #ffffff;
-		cursor: pointer;
-	}
-
-	.contact-form .privacy-consent__input:focus {
-		outline: 2px solid rgba(255, 255, 255, 0.8);
-		outline-offset: 2px;
-	}
-
-	.contact-form .privacy-consent__text {
-		color: rgba(255, 255, 255, 0.9);
-		font-size: 12px;
-		font-weight: 400;
-		letter-spacing: 0;
-		line-height: 1.35;
-		text-align: left;
-	}
-
-	.contact-form .btn-outline {
-		grid-column: 1 / -1;
-		justify-self: center;
-		margin-top: 8px;
-		color: #ffffff;
-		font-family: 'League Spartan', sans-serif;
-		font-weight: 500;
-		font-size: 17px;
-		padding: 14px 32px;
-		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.14);
-		border: 1px solid rgba(255, 255, 255, 0.5);
-		cursor: pointer;
-		transition:
-			background 0.2s ease,
-			border-color 0.2s ease;
-	}
-
-	.contact-form .btn-outline:hover {
-		background: rgba(255, 255, 255, 0.28);
-		border-color: #ffffff;
-	}
-
-	.contact-form .btn-outline:disabled {
-		opacity: 0.6;
-		cursor: default;
-	}
-
-	.contact-form-status {
-		grid-column: 1 / -1;
-		margin: 0;
-		text-align: center;
-		color: #ffffff;
-		font-size: 13px;
-		min-height: 1em;
+		.contact-panel {
+			width: min(100%, 680px);
+		}
 	}
 
 	@media (max-width: 700px) {
@@ -388,36 +114,33 @@
 		}
 
 		.contact-inner {
-			padding: 64px 6vw;
+			min-height: auto;
+			padding: 40px 14px;
 		}
 
 		.contact-panel {
-			padding: 24px;
+			width: 100%;
+			height: 820px;
+			border-radius: 22px;
 		}
 
-		.contact-form {
-			grid-template-columns: 1fr;
+		.contact-panel iframe {
+			border-radius: 22px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.contact-inner {
+			padding: 25px 8px;
 		}
 
-		.contact-form label:nth-of-type(3),
-		.contact-form label:nth-of-type(4) {
-			grid-column: auto;
+		.contact-panel {
+			height: 880px;
+			border-radius: 18px;
 		}
 
-		.contact-form .privacy-consent {
-			grid-column: auto;
-			margin-top: -2px;
-			margin-bottom: -4px;
-		}
-
-		.contact-form .privacy-consent__input {
-			width: 14px;
-			height: 14px;
-			flex-basis: 14px;
-		}
-
-		.contact-form .privacy-consent__text {
-			font-size: 11px;
+		.contact-panel iframe {
+			border-radius: 18px;
 		}
 	}
 </style>
