@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "bounce-easing",
+        "value": "bounce",
+        "createdAt": "2026-09-21T05:02:13.286Z",
+        "reason": "user confirmed: asked for a down arrow that bounces; the easing is a smooth cubic-bezier loop, the rule matched the keyframe name"
+      }
+    ]
+  }
+}

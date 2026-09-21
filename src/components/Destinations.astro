@@ -304,7 +304,7 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 		display: flex;
 		align-items: center;
 		gap: 12px;
-		background: #00002e;
+		background: var(--alalibre-navy);
 		padding: 0 6vw 40px;
 	}
 
@@ -419,7 +419,7 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 
 	.dest-tap-hint span {
 		color: #ffffff;
-		font-family: 'League Spartan', sans-serif;
+		font-family: var(--font-sans);
 		font-weight: 600;
 		font-size: 9px;
 		letter-spacing: 0.03em;
@@ -482,7 +482,7 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 		right: 0;
 		bottom: 0;
 		padding: 18px;
-		font-family: 'League Spartan', sans-serif;
+		font-family: var(--font-sans);
 	}
 
 	.dest-text h3 {
@@ -527,7 +527,7 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 		text-align: center;
 		padding: 22px;
 		box-sizing: border-box;
-		font-family: 'League Spartan', sans-serif;
+		font-family: var(--font-sans);
 	}
 
 	.dest-back-text h3 {
@@ -579,11 +579,12 @@ const loopedDestinations = [...destinations, ...destinations, ...destinations];
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
-		transition: background 0.2s ease;
+		transition: background 0.2s ease, color 0.2s ease;
 	}
 
 	.dest-arrow:hover {
-		background: rgba(255, 255, 255, 0.32);
+		background: var(--alalibre-aqua);
+		color: var(--alalibre-navy);
 	}
 
 	.dest-arrow svg {

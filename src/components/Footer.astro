@@ -58,7 +58,7 @@ const socials = [
 		border-top: 1px solid rgba(255, 255, 255, 0.08);
 		padding: 48px 6vw 24px;
 		text-align: center;
-		font-family: 'League Spartan', sans-serif;
+		font-family: var(--font-sans);
 	}
 
 	.footer-logo {
@@ -91,11 +91,12 @@ const socials = [
 		border-radius: 50%;
 		background: rgba(255, 255, 255, 0.1);
 		color: #ffffff;
-		transition: background 0.2s ease;
+		transition: background 0.2s ease, color 0.2s ease;
 	}
 
 	.footer-socials a:hover {
-		background: rgba(255, 255, 255, 0.24);
+		background: var(--alalibre-aqua);
+		color: var(--alalibre-navy);
 	}
 
 	.footer-socials svg {
@@ -119,7 +120,7 @@ const socials = [
 	}
 
 	.footer-terms:hover {
-		color: #ffffff;
+		color: var(--alalibre-aqua);
 	}
 
 	.footer-copy {
