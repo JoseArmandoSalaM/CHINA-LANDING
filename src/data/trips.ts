@@ -43,7 +43,7 @@ export const trips: Trip[] = [
 		name: 'El Sendero del Martín Pescador',
 		duration: '17 días / 16 noches',
 		summary:
-			"La vuelta completa por China: Beijing, Xi'an, Chengdu, Chongqing, Zhangjiajie, Fenghuang, Guilin, Shenzhen y Shanghái.",
+			"La vuelta completa por China: Beijing, Xi'an, Chengdu, Chongqing, Zhangjiajie, Fenghuang, Guilin, Shenzhen y Shanghái. Vuelos internacionales redondos.",
 		cities: [
 			'Beijing',
 			"Xi'an",
@@ -130,7 +130,7 @@ export const trips: Trip[] = [
 		name: 'Alas de Grulla Dorada',
 		duration: '14 días / 13 noches',
 		summary:
-			"Versión más enfocada en paisaje: Beijing, Xi'an, Guilin, Zhangjiajie y Shanghái.",
+			"Versión más enfocada en paisaje: Beijing, Xi'an, Guilin, Zhangjiajie y Shanghái. Vuelos internacionales redondos.",
 		cities: ['Beijing', "Xi'an", 'Guilin', 'Zhangjiajie', 'Shanghái'],
 		days: [
 			{

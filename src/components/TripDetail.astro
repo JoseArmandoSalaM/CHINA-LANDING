@@ -26,6 +26,13 @@ const thumb = (src: string) => src.replace('-opt.webp', '-sm.webp');
 		<h3 class="d-title">{trip.name}</h3>
 		<p class="d-duration">{trip.duration}</p>
 
+		<button type="button" class="d-includes-cta" data-scroll-target={`d-lists-${trip.slug}`}>
+			<span>Descubre qué incluye tu viaje</span>
+			<span class="d-includes-arrow" aria-hidden="true">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"></path></svg>
+			</span>
+		</button>
+
 		<h4>Día a día</h4>
 		<ol class="d-days">
 			{
@@ -41,7 +48,7 @@ const thumb = (src: string) => src.replace('-opt.webp', '-sm.webp');
 			}
 		</ol>
 
-		<div class="d-lists">
+		<div class="d-lists" id={`d-lists-${trip.slug}`}>
 			<section>
 				<h4>Qué incluye</h4>
 				<ul class="list list-yes">
@@ -212,6 +219,13 @@ const thumb = (src: string) => src.replace('-opt.webp', '-sm.webp');
 </div>
 
 <script>
+	// Botón "Descubre qué incluye tu viaje": baja hasta la lista de incluye/no incluye
+	document.querySelectorAll<HTMLButtonElement>('[data-scroll-target]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			document.getElementById(btn.dataset.scrollTarget!)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		});
+	});
+
 	// Flechas de la lista de salidas
 	document.querySelectorAll<HTMLButtonElement>('[data-dep-scroll]').forEach((btn) => {
 		btn.addEventListener('click', () => {
@@ -310,6 +324,50 @@ const thumb = (src: string) => src.replace('-opt.webp', '-sm.webp');
 		color: rgba(0, 0, 46, 0.75);
 		font-weight: 500;
 		font-size: clamp(15px, 1.05vw, 20px);
+	}
+
+	.d-includes-cta {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		margin: 0 0 20px;
+		padding: 10px 10px 10px 18px;
+		font: inherit;
+		font-weight: 700;
+		font-size: 13.5px;
+		color: var(--ink);
+		background: rgba(217, 178, 106, 0.16);
+		border: 1px solid var(--gold, #d9b26a);
+		border-radius: 999px;
+		cursor: pointer;
+		transition:
+			background 0.2s ease,
+			border-color 0.2s ease;
+	}
+
+	.d-includes-cta:hover {
+		background: rgba(217, 178, 106, 0.3);
+	}
+
+	.d-includes-arrow {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 24px;
+		height: 24px;
+		border-radius: 50%;
+		background: var(--gold, #d9b26a);
+		color: var(--ink);
+		transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	.d-includes-arrow svg {
+		width: 13px;
+		height: 13px;
+	}
+
+	.d-includes-cta:hover .d-includes-arrow {
+		transform: translateY(3px);
 	}
 
 	.detail-left h4 {
