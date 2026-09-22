@@ -107,9 +107,16 @@ const thumb = (src: string) => src.replace('-opt.webp', '-sm.webp');
 											<span class="dep-sub">{trip.duration}</span>
 										</span>
 										<span class="dep-side">
-											<span class:list={['dep-price', !dep.price && 'dep-ask']}>
-												{dep.price ? formatPrice(dep.price) : 'Consultar precio'}
-											</span>
+											{dep.priceDouble ? (
+												<span class="dep-price">
+													<span class="dep-price-line"><b>Doble</b> {formatPrice(dep.priceDouble)}</span>
+													{dep.priceSingle && (
+														<span class="dep-price-line"><b>Sencilla</b> {formatPrice(dep.priceSingle)}</span>
+													)}
+												</span>
+											) : (
+												<span class="dep-price dep-ask">Consultar precio</span>
+											)}
 											<span class="dep-cta">
 												Cotizar
 												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
@@ -583,8 +590,7 @@ const thumb = (src: string) => src.replace('-opt.webp', '-sm.webp');
 	.dep-main,
 	.dep-side,
 	.dep-date,
-	.dep-sub,
-	.dep-price {
+	.dep-sub {
 		display: block;
 	}
 
@@ -611,10 +617,22 @@ const thumb = (src: string) => src.replace('-opt.webp', '-sm.webp');
 	}
 
 	.dep-price {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
 		margin: 0;
-		font-weight: 800;
-		font-size: clamp(14px, 1vw, 17px);
+	}
+
+	.dep-price-line {
+		font-weight: 700;
+		font-size: 11.5px;
+		white-space: nowrap;
 		font-variant-numeric: tabular-nums;
+	}
+
+	.dep-price-line b {
+		font-weight: 600;
+		color: var(--muted);
 	}
 
 	.dep-ask {

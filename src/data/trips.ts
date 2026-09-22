@@ -9,8 +9,10 @@ export interface Departure {
 	start: string;
 	/** Fecha de regreso, AAAA-MM-DD */
 	end: string;
-	/** Precio en USD; undefined = aún sin precio cargado */
-	price?: number;
+	/** Precio en MXN por persona en ocupación doble; undefined = aún sin precio cargado */
+	priceDouble?: number;
+	/** Precio en MXN por persona en ocupación sencilla */
+	priceSingle?: number;
 }
 
 export interface GalleryImage {
@@ -35,6 +37,8 @@ const notIncluded = [
 	'Gastos personales y compras.',
 	'Propinas.',
 	'Alimentos que no estén indicados en el itinerario.',
+	'Costo del visado.',
+	'Shows nocturnos.',
 ];
 
 export const trips: Trip[] = [
@@ -104,11 +108,14 @@ export const trips: Trip[] = [
 			{ days: '17', place: 'Regreso', text: 'Traslado al aeropuerto para el vuelo internacional.' },
 		],
 		included: [
-			'16 noches de alojamiento en las 9 ciudades del recorrido.',
-			'Desayunos en el hotel a partir del día 3, y almuerzos y cenas en restaurantes locales según el itinerario (incluye el pato laqueado en Beijing).',
+			'16 noches de alojamiento en hoteles de 4 y 5 estrellas en las 9 ciudades del recorrido.',
+			'Vuelos internacionales redondos.',
+			'16 desayunos en el hotel, 13 almuerzos y 2 cenas en restaurantes locales según el itinerario (incluye el pato laqueado en Beijing).',
 			'Trenes de alta velocidad entre ciudades y vuelo Shenzhen–Shanghái.',
 			'Traslados del aeropuerto y de las estaciones al hotel, y transporte privado para las visitas.',
 			'Guía en español y entradas a todas las atracciones mencionadas en el itinerario.',
+			'Seguro de viajero.',
+			'Gestión del trámite de visa en línea.',
 		],
 		notIncluded,
 		gallery: [
@@ -118,11 +125,12 @@ export const trips: Trip[] = [
 			{ src: '/img/viajeros-xian-termales-opt.webp', alt: 'Grupo de Ala Libre en los manantiales termales de Lishan, cerca de Xi\'an' },
 		],
 		departures: [
-			{ start: '2027-03-10', end: '2027-03-26', price: 8600 },
-			{ start: '2027-05-07', end: '2027-05-23', price: 8660 },
-			{ start: '2027-07-14', end: '2027-07-30' },
-			{ start: '2027-09-08', end: '2027-09-24' },
-			{ start: '2027-10-15', end: '2027-10-31' },
+			{ start: '2027-03-10', end: '2027-03-26', priceDouble: 146150, priceSingle: 168986 },
+			{ start: '2027-05-07', end: '2027-05-23', priceDouble: 146150, priceSingle: 168986 },
+			{ start: '2027-07-14', end: '2027-07-30', priceDouble: 151400, priceSingle: 174236 },
+			{ start: '2027-09-12', end: '2027-09-28', priceDouble: 151400, priceSingle: 174236 },
+			{ start: '2027-10-15', end: '2027-10-31', priceDouble: 151400, priceSingle: 174236 },
+			{ start: '2027-11-03', end: '2027-11-19', priceDouble: 151400, priceSingle: 174236 },
 		],
 	},
 	{
@@ -166,11 +174,13 @@ export const trips: Trip[] = [
 		],
 		included: [
 			"13 noches en hoteles de 4 y 5 estrellas en Beijing, Xi'an, Guilin, Zhangjiajie y Shanghái.",
-			'Desayunos buffet diarios y 12 almuerzos tradicionales en restaurantes locales.',
-			'2 vuelos internacionales, traslados terrestres compartidos, 2 vuelos domésticos y 2 trayectos en tren de alta velocidad.',
+			'Desayunos buffet diarios, 11 almuerzos y 1 cena tradicionales en restaurantes locales.',
+			'2 vuelos internacionales, traslados terrestres compartidos, 3 vuelos domésticos y 2 trayectos en tren de alta velocidad.',
 			'Teleféricos y elevadores en atracciones seleccionadas.',
 			'Visitas guiadas a la Gran Muralla, Guerreros de Terracota, Río Li, Montaña Tianmen y Jardín Yuyuan.',
 			'Guías expertos en español (excepto Zhangjiajie, donde será en inglés) y conductores privados en cada ciudad.',
+			'Seguro de viajero.',
+			'Gestión del trámite de visa en línea.',
 		],
 		notIncluded,
 		gallery: [
@@ -180,12 +190,12 @@ export const trips: Trip[] = [
 			{ src: '/img/viajeros-beijing-guia-opt.webp', alt: 'Guía de Ala Libre y viajero durante el recorrido por Beijing' },
 		],
 		departures: [
-			{ start: '2027-03-17', end: '2027-04-02', price: 7780 },
-			{ start: '2027-05-14', end: '2027-05-27', price: 7780 },
-			{ start: '2027-07-16', end: '2027-07-29' },
-			{ start: '2027-09-17', end: '2027-09-30' },
-			{ start: '2027-10-15', end: '2027-10-28' },
-			{ start: '2027-11-12', end: '2027-11-25' },
+			{ start: '2027-03-14', end: '2027-03-27', priceDouble: 132180, priceSingle: 150000 },
+			{ start: '2027-05-14', end: '2027-05-27', priceDouble: 132180, priceSingle: 150000 },
+			{ start: '2027-07-16', end: '2027-07-29', priceDouble: 137400, priceSingle: 155550 },
+			{ start: '2027-09-17', end: '2027-09-30', priceDouble: 137400, priceSingle: 155550 },
+			{ start: '2027-10-15', end: '2027-10-28', priceDouble: 137400, priceSingle: 155550 },
+			{ start: '2027-11-12', end: '2027-11-25', priceDouble: 137400, priceSingle: 155550 },
 		],
 	},
 ];
@@ -228,7 +238,7 @@ export function formatShort({ start, end }: Departure): string {
 	return a.m === b.m ? `${a.d} – ${b.d} ${b.m}` : `${a.d} ${a.m} – ${b.d} ${b.m}`;
 }
 
-export const formatPrice = (price: number) => `USD ${price.toLocaleString('en-US')}`;
+export const formatPrice = (price: number) => `$${price.toLocaleString('en-US')} MXN`;
 
 export const whatsappLink = (text: string) =>
 	`https://api.whatsapp.com/send/?phone=522211201356&text=${encodeURIComponent(text)}&type=phone_number&app_absent=0`;

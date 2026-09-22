@@ -49,8 +49,8 @@ const agency = {
 };
 
 const tripSchema = trips.map((trip) => {
-	const priced = trip.departures.filter((d) => d.price !== undefined);
-	const prices = priced.map((d) => d.price as number);
+	const priced = trip.departures.filter((d) => d.priceDouble !== undefined);
+	const prices = priced.map((d) => d.priceDouble as number);
 	const url = `${site}#${trip.slug}`;
 
 	return {
@@ -73,7 +73,7 @@ const tripSchema = trips.map((trip) => {
 		...(priced.length && {
 			offers: {
 				'@type': 'AggregateOffer',
-				priceCurrency: 'USD',
+				priceCurrency: 'MXN',
 				lowPrice: Math.min(...prices),
 				highPrice: Math.max(...prices),
 				offerCount: priced.length,
@@ -81,8 +81,8 @@ const tripSchema = trips.map((trip) => {
 					'@type': 'Offer',
 					name: `Salida del ${formatRange(d)}`,
 					url,
-					priceCurrency: 'USD',
-					price: d.price,
+					priceCurrency: 'MXN',
+					price: d.priceDouble,
 					seller: { '@id': `${site}#agency` },
 				})),
 			},

@@ -48,8 +48,13 @@ import { trips, formatRange, formatPrice, whatsappLink } from '../data/trips';
 							return (
 								<li>
 									<span class="date-range">{range}</span>
-									{dep.price ? (
-										<span class="date-price">{formatPrice(dep.price)}</span>
+									{dep.priceDouble ? (
+										<span class="date-price">
+											<span class="date-price-line"><b>Doble</b> {formatPrice(dep.priceDouble)}</span>
+											{dep.priceSingle && (
+												<span class="date-price-line"><b>Sencilla</b> {formatPrice(dep.priceSingle)}</span>
+											)}
+										</span>
 									) : (
 										<span class="date-price date-price-ask">Consultar precio</span>
 									)}
@@ -261,11 +266,23 @@ import { trips, formatRange, formatPrice, whatsappLink } from '../data/trips';
 	}
 
 	.date-price {
-		color: #ffffff;
-		font-weight: 700;
-		font-size: 16px;
-		font-variant-numeric: tabular-nums;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
 		text-align: right;
+	}
+
+	.date-price-line {
+		color: #ffffff;
+		font-weight: 600;
+		font-size: 13.5px;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+	}
+
+	.date-price-line b {
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.65);
 	}
 
 	.date-price-ask {
