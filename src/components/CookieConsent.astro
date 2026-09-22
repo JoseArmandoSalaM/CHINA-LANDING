@@ -1,0 +1,225 @@
+---
+---
+
+<div id="cookie-consent" class="cc-banner" role="dialog" aria-live="polite" aria-label="Preferencias de cookies" hidden>
+	<div class="cc-box">
+		<p class="cc-text">
+			Usamos cookies propias necesarias para que el sitio funcione y, solo con tu permiso, cookies
+			analíticas y de publicidad (Google, Meta) para medir visitas y mostrar anuncios relevantes.
+			Puedes leer más en nuestra <a href="/politica-de-cookies">política de cookies</a>.
+		</p>
+
+		<div class="cc-panel" id="cc-panel" hidden>
+			<label class="cc-toggle">
+				<input type="checkbox" checked disabled />
+				<span>Necesarias (siempre activas)</span>
+			</label>
+			<label class="cc-toggle">
+				<input type="checkbox" id="cc-analytics-toggle" />
+				<span>Analíticas y publicidad (Google, Meta)</span>
+			</label>
+		</div>
+
+		<div class="cc-actions">
+			<button type="button" id="cc-customize" class="cc-btn cc-btn-ghost">Personalizar</button>
+			<button type="button" id="cc-reject" class="cc-btn cc-btn-ghost">Rechazar</button>
+			<button type="button" id="cc-save" class="cc-btn cc-btn-ghost" hidden>Guardar preferencias</button>
+			<button type="button" id="cc-accept" class="cc-btn cc-btn-solid">Aceptar todo</button>
+		</div>
+	</div>
+</div>
+
+<script>
+	interface Consent {
+		analytics: boolean;
+		ts: number;
+	}
+
+	const KEY = 'al-cookie-consent';
+
+	const readConsent = (): Consent | null => {
+		try {
+			const raw = localStorage.getItem(KEY);
+			return raw ? (JSON.parse(raw) as Consent) : null;
+		} catch {
+			return null;
+		}
+	};
+
+	const writeConsent = (analytics: boolean) => {
+		try {
+			localStorage.setItem(KEY, JSON.stringify({ analytics, ts: Date.now() } satisfies Consent));
+		} catch {
+			/* Safari en modo privado, cookies bloqueadas, etc.: seguimos sin persistir. */
+		}
+		document.dispatchEvent(new CustomEvent('al-consent-change', { detail: { analytics } }));
+	};
+
+	const banner = document.getElementById('cookie-consent');
+	const panel = document.getElementById('cc-panel');
+	const analyticsToggle = document.getElementById('cc-analytics-toggle') as HTMLInputElement | null;
+	const customizeBtn = document.getElementById('cc-customize');
+	const saveBtn = document.getElementById('cc-save');
+
+	const openPanel = (checked: boolean) => {
+		panel?.removeAttribute('hidden');
+		customizeBtn?.setAttribute('hidden', '');
+		saveBtn?.removeAttribute('hidden');
+		if (analyticsToggle) analyticsToggle.checked = checked;
+	};
+
+	const existing = readConsent();
+	if (!existing) {
+		banner?.removeAttribute('hidden');
+	} else {
+		// Ya eligió antes: no se muestra el banner, pero sí se avisa a Analytics.astro.
+		document.dispatchEvent(new CustomEvent('al-consent-change', { detail: { analytics: existing.analytics } }));
+	}
+
+	document.getElementById('cc-accept')?.addEventListener('click', () => {
+		writeConsent(true);
+		banner?.setAttribute('hidden', '');
+	});
+
+	document.getElementById('cc-reject')?.addEventListener('click', () => {
+		writeConsent(false);
+		banner?.setAttribute('hidden', '');
+	});
+
+	customizeBtn?.addEventListener('click', () => openPanel(existing?.analytics ?? false));
+
+	saveBtn?.addEventListener('click', () => {
+		writeConsent(!!analyticsToggle?.checked);
+		banner?.setAttribute('hidden', '');
+	});
+
+	// Enlace "Preferencias de cookies" en el footer: reabre el banner para cambiar de opinión.
+	document.addEventListener('click', (e) => {
+		const trigger = (e.target as HTMLElement).closest('[data-open-cookie-prefs]');
+		if (!trigger) return;
+		e.preventDefault();
+		banner?.removeAttribute('hidden');
+		openPanel(readConsent()?.analytics ?? false);
+	});
+</script>
+
+<style>
+	.cc-banner {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 200;
+		display: flex;
+		justify-content: center;
+		padding: 16px;
+		font-family: var(--font-sans);
+	}
+
+	.cc-banner[hidden] {
+		display: none;
+	}
+
+	.cc-box {
+		width: min(100%, 760px);
+		padding: 20px 24px;
+		background: #0a0a1a;
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		border-radius: 20px;
+		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+	}
+
+	.cc-text {
+		margin: 0 0 14px;
+		color: rgba(255, 255, 255, 0.9);
+		font-size: 13.5px;
+		line-height: 1.55;
+	}
+
+	.cc-text a {
+		color: var(--alalibre-aqua);
+	}
+
+	.cc-panel {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		margin: 0 0 16px;
+		padding: 14px;
+		background: rgba(255, 255, 255, 0.06);
+		border-radius: 12px;
+	}
+
+	.cc-panel[hidden] {
+		display: none;
+	}
+
+	.cc-toggle {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		color: #ffffff;
+		font-size: 13.5px;
+	}
+
+	.cc-toggle input {
+		width: 18px;
+		height: 18px;
+		accent-color: var(--alalibre-aqua);
+	}
+
+	.cc-actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 10px;
+	}
+
+	.cc-btn {
+		padding: 10px 18px;
+		font: inherit;
+		font-weight: 600;
+		font-size: 13.5px;
+		border-radius: 999px;
+		cursor: pointer;
+		transition:
+			background 0.2s ease,
+			border-color 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.cc-btn-ghost {
+		color: #ffffff;
+		background: transparent;
+		border: 1px solid rgba(255, 255, 255, 0.4);
+	}
+
+	.cc-btn-ghost:hover {
+		border-color: var(--alalibre-aqua);
+		color: var(--alalibre-aqua);
+	}
+
+	.cc-btn-solid {
+		color: var(--alalibre-navy);
+		background: var(--alalibre-aqua);
+		border: 1px solid var(--alalibre-aqua);
+	}
+
+	.cc-btn-solid:hover {
+		background: #0bc0e2;
+	}
+
+	@media (max-width: 480px) {
+		.cc-box {
+			padding: 18px 16px;
+		}
+
+		.cc-actions {
+			justify-content: stretch;
+		}
+
+		.cc-btn {
+			flex: 1 1 auto;
+		}
+	}
+</style>

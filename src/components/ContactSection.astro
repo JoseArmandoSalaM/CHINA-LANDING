@@ -50,7 +50,7 @@ import bannerForm from '../assets/contact/bannerform.jpg';
     data-form-id="OIX9e9bTWKjsl5M6KLex"
     data-cookie-consent="true"
     data-cookie-consent-provider="auto"
-    title="PAGINA WEB"
+    title="Formulario de contacto de Ala Libre"
     loading="lazy"
         >
 </iframe>
@@ -61,6 +61,17 @@ import bannerForm from '../assets/contact/bannerform.jpg';
 					<a href="https://api.whatsapp.com/send/?phone=522211201356&text=Hola%2C+quiero+viajar+con+Ala+Libre%2C+quiero+comenzar+ahora&type=phone_number&app_absent=0">WhatsApp</a>.
 				</p>
 			</noscript>
+
+			<div class="consent-gate" id="contact-consent-gate" hidden>
+				<p class="nojs">
+					Este formulario lo provee un tercero y usa cookies propias de su servicio. Acepta las
+					cookies analíticas y de publicidad para verlo aquí, o escríbenos directo por
+					<a href="https://api.whatsapp.com/send/?phone=522211201356&text=Hola%2C+quiero+viajar+con+Ala+Libre%2C+quiero+comenzar+ahora&type=phone_number&app_absent=0">WhatsApp</a>.
+				</p>
+				<button type="button" id="contact-consent-accept" class="consent-gate-btn">
+					Aceptar y cargar formulario
+				</button>
+			</div>
 
 		</div>
 	</div>
@@ -74,8 +85,21 @@ import bannerForm from '../assets/contact/bannerform.jpg';
 	// el usuario ya interactuó con la página (scroll, toque o tecla) Y está cerca de esta sección.
 	// Orden importante: primero el script del formulario y, cuando termina, se le da su src al iframe;
 	// así el script ya está listo para recibir los mensajes del formulario.
+	// El formulario es de un proveedor externo (GoHighLevel) e instala sus propias cookies:
+	// solo se carga si el visitante ya aceptó cookies analíticas/publicitarias en el banner.
+	const CONSENT_KEY = 'al-cookie-consent';
+	const readConsent = (): { analytics: boolean } | null => {
+		try {
+			const raw = localStorage.getItem(CONSENT_KEY);
+			return raw ? JSON.parse(raw) : null;
+		} catch {
+			return null;
+		}
+	};
+
 	const contact = document.getElementById('contacto');
 	const frame = contact?.querySelector<HTMLIFrameElement>('iframe');
+	const gate = document.getElementById('contact-consent-gate');
 
 	if (contact && frame) {
 		const formSrc = frame.dataset.src ?? frame.getAttribute('src') ?? '';
@@ -85,6 +109,11 @@ import bannerForm from '../assets/contact/bannerform.jpg';
 
 		const load = () => {
 			if (done || !near || !interacted || !formSrc) return;
+			if (!readConsent()?.analytics) {
+				gate?.removeAttribute('hidden');
+				return;
+			}
+			gate?.setAttribute('hidden', '');
 			done = true;
 			const script = document.createElement('script');
 			script.src = FORM_SCRIPT;
@@ -95,6 +124,21 @@ import bannerForm from '../assets/contact/bannerform.jpg';
 			};
 			document.body.append(script);
 		};
+
+		document.getElementById('contact-consent-accept')?.addEventListener('click', () => {
+			try {
+				localStorage.setItem(CONSENT_KEY, JSON.stringify({ analytics: true, ts: Date.now() }));
+			} catch {
+				/* sin acceso a localStorage: el formulario no se recordará como aceptado en la próxima visita */
+			}
+			document.dispatchEvent(new CustomEvent('al-consent-change', { detail: { analytics: true } }));
+			load();
+		});
+
+		// El banner principal (u otra pestaña) también puede cambiar el consentimiento.
+		document.addEventListener('al-consent-change', ((e: CustomEvent<{ analytics: boolean }>) => {
+			if (e.detail?.analytics) load();
+		}) as EventListener);
 
 		new IntersectionObserver(
 			(entries) => {
@@ -235,6 +279,35 @@ import bannerForm from '../assets/contact/bannerform.jpg';
 
 	.nojs a {
 		color: var(--gold);
+	}
+
+	.consent-gate {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 14px;
+		padding: 24px;
+	}
+
+	.consent-gate[hidden] {
+		display: none;
+	}
+
+	.consent-gate-btn {
+		padding: 12px 24px;
+		color: var(--alalibre-navy);
+		background: var(--gold);
+		border: 0;
+		border-radius: 999px;
+		font: inherit;
+		font-weight: 700;
+		font-size: 14px;
+		cursor: pointer;
+		transition: background 0.2s ease;
+	}
+
+	.consent-gate-btn:hover {
+		background: #ecd28f;
 	}
 
 	.contact-panel iframe {

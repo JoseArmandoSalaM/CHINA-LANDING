@@ -1,0 +1,104 @@
+---
+import Layout from './Layout.astro';
+import Menu from '../components/Menu.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+	title: string;
+	description: string;
+	updated: string;
+}
+
+const { title, description, updated } = Astro.props;
+---
+
+<Layout title={`${title} | Ala Libre`} description={description}>
+	<Menu />
+	<main class="legal">
+		<h1>{title}</h1>
+		<p class="legal-updated">Última actualización: {updated}</p>
+		<div class="legal-body">
+			<slot />
+		</div>
+	</main>
+	<Footer />
+</Layout>
+
+<style>
+	.legal {
+		max-width: 760px;
+		margin: 0 auto;
+		padding: 120px 6vw 80px;
+		font-family: var(--font-sans);
+		color: var(--alalibre-mist);
+	}
+
+	.legal h1 {
+		margin: 0 0 8px;
+		color: #ffffff;
+		font-weight: 800;
+		font-size: clamp(28px, 4vw, 44px);
+		line-height: 1.1;
+	}
+
+	.legal-updated {
+		margin: 0 0 40px;
+		color: rgba(255, 255, 255, 0.6);
+		font-size: 13px;
+	}
+
+	.legal-body :global(h2) {
+		margin: 40px 0 12px;
+		color: #ffffff;
+		font-weight: 700;
+		font-size: clamp(18px, 2vw, 24px);
+	}
+
+	.legal-body :global(p) {
+		margin: 0 0 14px;
+		font-size: 15px;
+		line-height: 1.7;
+	}
+
+	.legal-body :global(ul) {
+		margin: 0 0 14px;
+		padding-left: 20px;
+		font-size: 15px;
+		line-height: 1.7;
+	}
+
+	.legal-body :global(li) {
+		margin-bottom: 6px;
+	}
+
+	.legal-body :global(a) {
+		color: var(--alalibre-aqua);
+	}
+
+	.legal-body :global(strong) {
+		color: #ffffff;
+	}
+
+	.legal-body :global(.legal-table-wrap) {
+		overflow-x: auto;
+		margin: 0 0 20px;
+	}
+
+	.legal-body :global(table) {
+		width: 100%;
+		min-width: 480px;
+		border-collapse: collapse;
+		font-size: 13.5px;
+	}
+
+	.legal-body :global(th),
+	.legal-body :global(td) {
+		text-align: left;
+		padding: 8px 10px;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+	}
+
+	.legal-body :global(th) {
+		color: #ffffff;
+	}
+</style>

@@ -47,7 +47,12 @@ const socials = [
 		5 de Mayo 1004, 12 Oriente, Tentla, Plaza La Joya, 72810, San Andrés Cholula, Puebla, México
 	</p>
 
-	<a class="footer-terms" href="#">CONSULTAR TÉRMINOS Y CONDICIONES</a>
+	<nav class="footer-legal" aria-label="Legal">
+		<a href="/terminos-y-condiciones">Términos y condiciones</a>
+		<a href="/politica-de-privacidad">Aviso de privacidad</a>
+		<a href="/politica-de-cookies">Política de cookies</a>
+		<button type="button" data-open-cookie-prefs>Preferencias de cookies</button>
+	</nav>
 
 	<p class="footer-copy">Copyright © ALA LIBRE 2025</p>
 </footer>
@@ -110,16 +115,32 @@ const socials = [
 		font-size: 12.5px;
 	}
 
-	.footer-terms {
-		display: inline-block;
+	.footer-legal {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-items: center;
+		gap: 6px 18px;
 		margin-bottom: 16px;
+	}
+
+	.footer-legal a,
+	.footer-legal button {
+		margin: 0;
+		padding: 0;
 		color: rgba(255, 255, 255, 0.6);
+		font: inherit;
 		font-size: 11.5px;
 		letter-spacing: 0.05em;
 		text-decoration: none;
+		background: none;
+		border: 0;
+		cursor: pointer;
+		transition: color 0.2s ease;
 	}
 
-	.footer-terms:hover {
+	.footer-legal a:hover,
+	.footer-legal button:hover {
 		color: var(--alalibre-aqua);
 	}
 

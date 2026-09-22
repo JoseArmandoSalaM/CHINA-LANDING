@@ -1,5 +1,7 @@
 ---
 import { Font } from 'astro:assets';
+import Analytics from '../components/Analytics.astro';
+import CookieConsent from '../components/CookieConsent.astro';
 
 interface Props {
 	title?: string;
@@ -68,9 +70,11 @@ const ogImageURL = new URL(image, siteUrl);
 		<slot name="head" />
 
 		<Font cssVariable="--font-league-spartan" preload={[{ subset: 'latin' }]} />
+		<Analytics />
 	</head>
 	<body>
 		<slot />
+		<CookieConsent />
 	</body>
 </html>
 

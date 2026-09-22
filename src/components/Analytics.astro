@@ -1,0 +1,44 @@
+---
+// Configura tu contenedor de Google Tag Manager con PUBLIC_GTM_ID (ver .env.example).
+// Dentro de Tag Manager se agregan las etiquetas de Google Analytics 4, Meta Pixel, etc.
+// — así no hay que tocar código cada vez que se agrega o cambia una herramienta.
+const gtmId = import.meta.env.PUBLIC_GTM_ID;
+---
+
+{
+	gtmId && (
+		<script define:vars={{ gtmId }} is:inline>
+			const KEY = 'al-cookie-consent';
+			let loaded = false;
+
+			const loadGTM = () => {
+				if (loaded) return;
+				loaded = true;
+				(function (w, d, s, l, i) {
+					w[l] = w[l] || [];
+					w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+					const f = d.getElementsByTagName(s)[0];
+					const j = d.createElement(s);
+					const dl = l !== 'dataLayer' ? '&l=' + l : '';
+					j.async = true;
+					j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+					f.parentNode.insertBefore(j, f);
+				})(window, document, 'script', 'dataLayer', gtmId);
+			};
+
+			let consent = null;
+			try {
+				const raw = localStorage.getItem(KEY);
+				consent = raw ? JSON.parse(raw) : null;
+			} catch {
+				/* sin acceso a localStorage: no se carga hasta que el usuario decida en el banner */
+			}
+
+			if (consent && consent.analytics) loadGTM();
+
+			document.addEventListener('al-consent-change', (e) => {
+				if (e.detail && e.detail.analytics) loadGTM();
+			});
+		</script>
+	)
+}
