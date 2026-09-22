@@ -112,11 +112,10 @@ export const trips: Trip[] = [
 		],
 		notIncluded,
 		gallery: [
-			{ src: '/img/beijing-opt.webp', alt: 'Gran Muralla China, Beijing' },
-			{ src: '/img/zhangjiajie-opt.webp', alt: 'Montañas de Zhangjiajie' },
-			{ src: '/img/guilin-opt.webp', alt: 'Terrazas de arroz de Longji, Guilin' },
-			{ src: '/img/xian-opt.webp', alt: "Guerreros de Terracota, Xi'an" },
-			{ src: '/img/shanghai-opt.webp', alt: 'Torre de la Perla Oriental, Shanghái' },
+			{ src: '/img/viajeros-muralla-opt.webp', alt: 'Grupo de viajeros de Ala Libre ondeando la bandera de México en la Gran Muralla China, Mutianyu' },
+			{ src: '/img/viajeros-tiananmen-opt.webp', alt: "Viajeros de Ala Libre en la Plaza de Tian'anmen, Beijing" },
+			{ src: '/img/viajeros-zhangjiajie-cristal-opt.webp', alt: 'Viajeros de Ala Libre en la pasarela de cristal de la Montaña Tianmen, Zhangjiajie' },
+			{ src: '/img/viajeros-xian-termales-opt.webp', alt: 'Grupo de Ala Libre en los manantiales termales de Lishan, cerca de Xi\'an' },
 		],
 		departures: [
 			{ start: '2027-03-10', end: '2027-03-26', price: 8600 },
@@ -175,11 +174,10 @@ export const trips: Trip[] = [
 		],
 		notIncluded,
 		gallery: [
-			{ src: '/img/zhangjiajie-opt.webp', alt: 'Montañas de Zhangjiajie' },
-			{ src: '/img/guilin-opt.webp', alt: 'Terrazas de arroz de Longji, Guilin' },
-			{ src: '/img/beijing-opt.webp', alt: 'Gran Muralla China, Beijing' },
-			{ src: '/img/xian-opt.webp', alt: "Guerreros de Terracota, Xi'an" },
-			{ src: '/img/shanghai-opt.webp', alt: 'Torre de la Perla Oriental, Shanghái' },
+			{ src: '/img/viajeros-ciudad-prohibida-opt.webp', alt: 'Grupo de viajeros de Ala Libre frente al Palacio Imperial, Ciudad Prohibida de Beijing' },
+			{ src: '/img/viajeros-palacio-verano-opt.webp', alt: 'Grupo de viajeros de Ala Libre en el Palacio de Verano, Beijing' },
+			{ src: '/img/viajeros-tianmen-opt.webp', alt: 'Viajeros de Ala Libre en la Puerta del Cielo, Montaña Tianmen, Zhangjiajie' },
+			{ src: '/img/viajeros-beijing-guia-opt.webp', alt: 'Guía de Ala Libre y viajero durante el recorrido por Beijing' },
 		],
 		departures: [
 			{ start: '2027-03-17', end: '2027-04-02', price: 7780 },
