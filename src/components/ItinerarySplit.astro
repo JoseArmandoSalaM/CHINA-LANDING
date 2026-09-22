@@ -1,0 +1,671 @@
+---
+import { trips, formatShort } from '../data/trips';
+import TripDetail from './TripDetail.astro';
+import AmbassadorModal from './AmbassadorModal.astro';
+import GalleryModal from './GalleryModal.astro';
+
+const bySlug = (slug: string) => trips.find((t) => t.slug === slug)!;
+
+const left = bySlug('alas-de-grulla-dorada');
+const right = bySlug('sendero-del-martin-pescador');
+const sides = [
+	{ trip: left, class: 'split-left' },
+	{ trip: right, class: 'split-right' },
+];
+---
+
+<section id="itinerarios" aria-labelledby="itinerarios-title">
+	<h2 id="itinerarios-title" class="sr-only">
+		Itinerarios de viajes grupales a China: {left.duration.split(' / ')[0]} y {right.duration.split(' / ')[0]}
+	</h2>
+
+	<div class="split-white" aria-hidden="true"></div>
+
+	<div class="split-view">
+		<div class={`split-side ${sides[0].class}`}>
+			<p class="country">Viaja a China</p>
+			<h3>{left.name}</h3>
+			<p class="days">{left.duration}</p>
+			<div class="dates-wrap">
+				<ul class="dates" aria-label="Salidas disponibles">
+					{left.departures.map((d) => <li>{formatShort(d)}</li>)}
+				</ul>
+			</div>
+			<button class="more" type="button" data-open={left.slug} aria-label={`Ver más: ${left.name}`}>
+				<span>Ver más</span>
+				<span class="more-arrow" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M9 5l7 7-7 7"></path>
+					</svg>
+				</span>
+			</button>
+		</div>
+
+		<div class={`split-side ${sides[1].class}`}>
+			<p class="country">Viaja a China</p>
+			<h3>{right.name}</h3>
+			<p class="days">{right.duration}</p>
+			<div class="dates-wrap">
+				<ul class="dates" aria-label="Salidas disponibles">
+					{right.departures.map((d) => <li>{formatShort(d)}</li>)}
+				</ul>
+			</div>
+			<button class="more" type="button" data-open={right.slug} aria-label={`Ver más: ${right.name}`}>
+				<span>Ver más</span>
+				<span class="more-arrow" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M9 5l7 7-7 7"></path>
+					</svg>
+				</span>
+			</button>
+		</div>
+	</div>
+
+	<div class="detail-view">
+		{trips.map((trip) => <TripDetail trip={trip} />)}
+	</div>
+
+	<!-- Fuera de .split-view para seguir visible mientras cambia la sección -->
+	<div class="split-badge" aria-hidden="true">
+		<div class="badge-inner">
+			<img src="/img/isotipo.svg" alt="" width="400" height="400" decoding="sync" />
+		</div>
+	</div>
+</section>
+
+<AmbassadorModal />
+<GalleryModal />
+
+<script>
+	import type { gsap as GSAP } from 'gsap';
+
+	type Timeline = ReturnType<typeof GSAP.timeline>;
+
+	// GSAP pesa ~70 KB: no se descarga con la página, sino en un momento libre, al acercarse a la
+	// sección o al pasar el cursor sobre "Ver más" (lo que ocurra primero).
+	// Si la descarga falla (sin red, bloqueada, servidor de desarrollo reiniciándose...), el itinerario se
+	// abre y se cierra igual, solo que sin animación: el botón nunca depende de GSAP.
+	let gsap!: typeof GSAP;
+	let gsapLoading: Promise<boolean> | null = null;
+	const loadGsap = (): Promise<boolean> =>
+		(gsapLoading ??= import('gsap')
+			.then((m) => {
+				gsap = m.gsap;
+				return true;
+			})
+			.catch(() => {
+				gsapLoading = null; // permite reintentar en el siguiente clic
+				return false;
+			}));
+	const whenIdle = (fn: () => void, timeout: number) =>
+		'requestIdleCallback' in window ? window.requestIdleCallback(fn, { timeout }) : setTimeout(fn, timeout);
+
+	const section = document.getElementById('itinerarios');
+	if (section) {
+		const white = section.querySelector<HTMLElement>('.split-white')!;
+		const badge = section.querySelector<HTMLElement>('.badge-inner')!;
+		const badgeBox = section.querySelector<HTMLElement>('.split-badge')!;
+		const sides = [...section.querySelectorAll<HTMLElement>('.split-side')];
+		const panels = [...section.querySelectorAll<HTMLElement>('.detail')];
+
+		// Precarga las fotos del detalle en un momento libre, para que no aparezcan a mitad de la animación.
+		// No se hace con "ahorro de datos" ni en conexiones 2G/3G.
+		const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+		const constrained = !!conn && (!!conn.saveData || /(^|-)[23]g$/.test(conn.effectiveType ?? ''));
+		const warm = () =>
+			panels.forEach((p) =>
+				p.querySelectorAll<HTMLImageElement>('img[loading="lazy"]').forEach((img) => (img.loading = 'eager'))
+			);
+		if (!constrained) whenIdle(warm, 4000);
+
+		whenIdle(loadGsap, 3000);
+		new IntersectionObserver(
+			(entries, io) => {
+				if (entries.some((e) => e.isIntersecting)) {
+					loadGsap();
+					io.disconnect();
+				}
+			},
+			{ rootMargin: '900px 0px' }
+		).observe(section);
+
+		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const stacked = () => window.matchMedia('(max-width: 900px)').matches;
+		// Diagonal del modo detalle: casi vertical, para dejar espacio a la columna de información.
+		const DETAIL_CLIP = 'polygon(0% 0%, 54% 0%, 46% 100%, 0% 100%)';
+
+		let busy = false;
+		let active: HTMLElement | null = null;
+		let opener: HTMLElement | null = null;
+
+		const speed = (tl: Timeline) => tl.timeScale(reduce ? 30 : 1);
+
+		// Escala con la que el círculo del logo cubre por completo la sección.
+		const coverScale = () =>
+			(Math.hypot(section.offsetWidth, section.offsetHeight) / badge.offsetWidth) * 1.15;
+
+		// Respaldo sin animación (cuando GSAP no está disponible)
+		const showInstant = (panel: HTMLElement) => {
+			const top = section.getBoundingClientRect().top;
+			if (top < -2) window.scrollBy({ top, behavior: 'auto' });
+			section.classList.add('is-detail');
+			panels.forEach((p) => (p.hidden = p !== panel));
+			if (stacked()) white.style.opacity = '0';
+			else white.style.clipPath = DETAIL_CLIP;
+			badge.style.visibility = 'hidden';
+			busy = false;
+			panel.querySelector<HTMLElement>('[data-close]')?.focus({ preventScroll: true });
+		};
+
+		const hideInstant = (panel: HTMLElement) => {
+			const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+			section.classList.remove('is-detail');
+			section.style.height = '';
+			badgeBox.style.top = '';
+			panel.hidden = true;
+			white.style.clipPath = '';
+			white.style.opacity = '';
+			badge.style.visibility = '';
+			badge.style.transform = '';
+			badge.style.opacity = '';
+			sides.forEach((side) => {
+				side.style.opacity = '';
+				side.style.transform = '';
+			});
+			window.scrollTo({ top: sectionTop, behavior: 'auto' });
+			busy = false;
+			active = null;
+			opener?.focus({ preventScroll: true });
+		};
+
+		const open = async (slug: string, from: HTMLElement) => {
+			const panel = panels.find((p) => p.dataset.trip === slug);
+			if (busy || !panel) return;
+			busy = true;
+			active = panel;
+			opener = from;
+
+			if (!(await loadGsap())) {
+				showInstant(panel);
+				return;
+			}
+
+			const top = section.getBoundingClientRect().top;
+			if (top < -2) window.scrollBy({ top, behavior: reduce ? 'auto' : 'smooth' });
+
+			// Mientras dura la transición la sección conserva su altura; después se libera.
+			const startHeight = section.offsetHeight;
+			section.style.height = startHeight + 'px';
+			// El logo conserva su lugar aunque la sección cambie de alto al mostrar el detalle.
+			badgeBox.style.top = startHeight / 2 + 'px';
+			const scale = coverScale();
+
+			const tl = gsap.timeline({
+				onComplete: () => {
+					section.style.height = '';
+					badgeBox.style.top = '';
+					gsap.set(badge, { autoAlpha: 0 });
+					busy = false;
+					panel.querySelector<HTMLElement>('[data-close]')?.focus({ preventScroll: true });
+				},
+			});
+
+			// 1) El logo gira y sale hacia la pantalla hasta taparla.
+			tl.to(badge, { rotation: 360, scale, duration: 1.1, ease: 'power3.in' });
+
+			// 2) Con la pantalla cubierta se cambia a la sección del itinerario.
+			tl.add(() => {
+				section.classList.add('is-detail');
+				panels.forEach((p) => (p.hidden = p !== panel));
+				if (stacked()) {
+					gsap.set(white, { opacity: 0 });
+					// En móvil el detalle es más alto que la pantalla: se fija ya su altura final para que no se mueva después.
+					section.style.height = 'auto';
+					section.style.height = section.offsetHeight + 'px';
+				} else gsap.set(white, { clipPath: DETAIL_CLIP });
+			});
+
+			// 3) El logo termina de pasar de largo y deja ver el itinerario.
+			tl.to(badge, { rotation: 540, scale: scale * 1.5, opacity: 0, duration: 0.7, ease: 'power2.out' });
+			tl.fromTo(
+				panel.querySelectorAll('.detail-left > *, .card > *'),
+				{ opacity: 0, y: 28 },
+				{ opacity: 1, y: 0, duration: 0.6, ease: 'power3.out', stagger: 0.05, clearProps: 'opacity,transform' },
+				'<0.15'
+			);
+
+			speed(tl);
+		};
+
+		const close = () => {
+			if (busy || !active) return;
+			busy = true;
+			const panel = active;
+			if (!gsap) {
+				hideInstant(panel);
+				return;
+			}
+			const columns = panel.querySelectorAll('.detail-left, .detail-right');
+
+			const tl = gsap.timeline({
+				onComplete: () => {
+					gsap.set(sides, { clearProps: 'all' });
+					gsap.set(badge, { clearProps: 'transform,opacity,visibility' });
+					busy = false;
+					active = null;
+					opener?.focus({ preventScroll: true });
+				},
+			});
+
+			tl.to(columns, { opacity: 0, y: 20, duration: 0.3, ease: 'power2.in' });
+
+			// Vuelve a la pantalla dividida, tapada por el logo gigante.
+			tl.add(() => {
+				const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+				section.classList.remove('is-detail');
+				section.style.height = '';
+				badgeBox.style.top = '';
+				panel.hidden = true;
+				gsap.set(columns, { clearProps: 'opacity,transform' });
+				gsap.set(white, { clearProps: 'all' });
+				gsap.set(sides, { opacity: 0, y: 24 });
+				window.scrollTo({ top: sectionTop, behavior: 'auto' });
+				gsap.set(badge, { autoAlpha: 1, opacity: 1, rotation: -360, scale: coverScale() });
+			});
+
+			// El logo regresa desde la pantalla girando hasta su lugar y revela las dos mitades.
+			tl.to(badge, { rotation: 0, scale: 1, duration: 1, ease: 'power3.out' });
+			tl.to(sides, { opacity: 1, y: 0, duration: 0.55, ease: 'power3.out', stagger: 0.08 }, '<0.45');
+
+			speed(tl);
+		};
+
+		section.querySelectorAll<HTMLButtonElement>('[data-open]').forEach((btn) => {
+			btn.addEventListener('pointerenter', loadGsap, { once: true });
+			btn.addEventListener('focus', loadGsap, { once: true });
+			btn.addEventListener('click', () => open(btn.dataset.open!, btn));
+		});
+		section.querySelectorAll<HTMLButtonElement>('[data-close]').forEach((btn) =>
+			btn.addEventListener('click', close)
+		);
+
+		document.addEventListener('keydown', (e) => {
+			if (e.key !== 'Escape' || document.querySelector('dialog[open]')) return;
+			close();
+		});
+	}
+</script>
+
+<style>
+	#itinerarios {
+		--gold: #d9b26a;
+		--gold-dark: #8a6a25;
+		position: relative;
+		height: max(560px, 100svh);
+		overflow: hidden;
+		background: var(--alalibre-navy);
+		font-family: var(--font-sans);
+	}
+
+	/* Escritorio: el detalle mide igual que la pantalla dividida, así no hay salto de tamaño */
+	#itinerarios.is-detail {
+		height: max(560px, 100svh);
+	}
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	/* Mitad blanca: se recorta en diagonal sobre el fondo azul */
+	.split-white {
+		position: absolute;
+		inset: 0;
+		/* Degradado plano en vez de color sólido: el recorte diagonal (clip-path) lo ignoran los verificadores
+		   automáticos de contraste, que tomarían el blanco como fondo de todo el bloque y darían falsos avisos. */
+		background: linear-gradient(#ffffff, #ffffff);
+		clip-path: polygon(0 0, 57% 0, 43% 100%, 0 100%);
+	}
+
+	.split-view {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.is-detail .split-view {
+		display: none;
+	}
+
+	.detail-view {
+		position: relative;
+		z-index: 2;
+		display: none;
+	}
+
+	.is-detail .detail-view {
+		display: block;
+		height: 100%;
+	}
+
+	/* Tablet y móvil: bloques apilados, altura según contenido */
+	@media (max-width: 900px) {
+		#itinerarios.is-detail {
+			height: auto;
+			min-height: 100svh;
+		}
+
+		.is-detail .detail-view {
+			height: auto;
+		}
+	}
+
+	.split-side {
+		position: relative;
+		z-index: 2;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 14px;
+		padding: 0 4vw;
+		text-align: center;
+	}
+
+	.split-side > * {
+		max-width: 30vw;
+	}
+
+	.split-left {
+		color: var(--alalibre-navy);
+	}
+
+	.split-right {
+		color: #ffffff;
+	}
+
+	.country {
+		margin: 0;
+		font-weight: 700;
+		font-size: clamp(13px, 1.1vw, 26px);
+		letter-spacing: 0.32em;
+		text-transform: uppercase;
+		text-indent: 0.32em;
+	}
+
+	.split-left .country {
+		color: var(--gold-dark);
+	}
+
+	.split-right .country {
+		color: var(--gold);
+	}
+
+	.split-side h3 {
+		margin: 0;
+		font-weight: 800;
+		font-size: clamp(30px, 3.6vw, 104px);
+		line-height: 1.02;
+		letter-spacing: -0.01em;
+		text-transform: uppercase;
+		text-wrap: balance;
+	}
+
+	.days {
+		margin: 0 0 10px;
+		font-weight: 500;
+		font-size: clamp(16px, 1.4vw, 34px);
+		letter-spacing: 0.02em;
+	}
+
+	.split-left .days {
+		color: rgba(0, 0, 46, 0.75);
+	}
+
+	.split-right .days {
+		color: rgba(255, 255, 255, 0.85);
+	}
+
+	/* Las salidas se despliegan al pasar el cursor (o al enfocar el botón) */
+	.dates-wrap {
+		display: grid;
+		grid-template-rows: 0fr;
+		margin-top: -14px;
+		transition: grid-template-rows 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	.split-side:hover .dates-wrap,
+	.split-side:focus-within .dates-wrap {
+		grid-template-rows: 1fr;
+	}
+
+	.dates {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 8px;
+		min-height: 0;
+		margin: 0;
+		padding: 14px 0 0;
+		list-style: none;
+		overflow: hidden;
+		opacity: 0;
+		transition: opacity 0.35s ease;
+	}
+
+	.split-side:hover .dates,
+	.split-side:focus-within .dates {
+		opacity: 1;
+		transition-delay: 0.1s;
+	}
+
+	.split-side .dates li:hover {
+		color: var(--alalibre-navy);
+		background: var(--gold);
+		border-color: var(--gold);
+	}
+
+	/* Sin hover (táctil): siempre visibles */
+	@media (hover: none) {
+		.dates-wrap {
+			grid-template-rows: 1fr;
+		}
+
+		.dates {
+			opacity: 1;
+		}
+	}
+
+	.dates li {
+		padding: 5px 14px;
+		font-weight: 600;
+		font-size: clamp(12px, 0.9vw, 18px);
+		white-space: nowrap;
+		border-radius: 999px;
+		transition:
+			background 0.2s ease,
+			border-color 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.split-left .dates li {
+		color: var(--alalibre-navy);
+		background: rgba(0, 0, 46, 0.06);
+		border: 1px solid rgba(0, 0, 46, 0.22);
+	}
+
+	.split-right .dates li {
+		color: #ffffff;
+		background: rgba(255, 255, 255, 0.08);
+		border: 1px solid rgba(255, 255, 255, 0.3);
+	}
+
+	.more {
+		display: inline-flex;
+		align-items: center;
+		gap: 16px;
+		padding: 6px 6px 6px 24px;
+		font-family: inherit;
+		font-weight: 600;
+		font-size: clamp(14px, 1.2vw, 26px);
+		border-radius: 999px;
+		cursor: pointer;
+		transition:
+			background 0.25s ease,
+			border-color 0.25s ease;
+	}
+
+	.split-left .more {
+		color: #ffffff;
+		background: var(--alalibre-navy);
+		border: 1px solid var(--alalibre-navy);
+	}
+
+	.split-left .more:hover {
+		background: #0a0a4a;
+	}
+
+	.split-right .more {
+		color: #ffffff;
+		background: rgba(255, 255, 255, 0.08);
+		border: 1px solid rgba(255, 255, 255, 0.55);
+	}
+
+	.split-right .more:hover {
+		background: rgba(255, 255, 255, 0.16);
+		border-color: var(--gold);
+	}
+
+	.more-arrow {
+		display: grid;
+		place-items: center;
+		width: max(38px, 2.25em);
+		height: max(38px, 2.25em);
+		flex: none;
+		border-radius: 50%;
+		background: var(--gold);
+		color: var(--alalibre-navy);
+		transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	.more-arrow svg {
+		width: 1em;
+		height: 1em;
+	}
+
+	.more:hover .more-arrow {
+		transform: translateX(4px);
+	}
+
+	/* El contenedor centra; el círculo interior lo anima GSAP (giro + zoom out) */
+	.split-badge {
+		position: absolute;
+		z-index: 5;
+		pointer-events: none;
+		top: 50%;
+		left: 50%;
+		width: clamp(88px, 9vw, 240px);
+		aspect-ratio: 1;
+		transform: translate(-50%, -50%);
+	}
+
+	.badge-inner {
+		display: grid;
+		place-items: center;
+		width: 100%;
+		height: 100%;
+		border-radius: 50%;
+		background: var(--alalibre-navy);
+		border: 2px solid var(--gold);
+		box-shadow: 0 12px 32px rgba(0, 0, 30, 0.35);
+		will-change: transform;
+	}
+
+	.badge-inner img {
+		width: 62%;
+		height: 62%;
+		object-fit: contain;
+	}
+
+	@media (max-width: 700px) {
+		#itinerarios:not(.is-detail) {
+			height: clamp(660px, 100svh, 900px);
+		}
+
+		.split-view {
+			grid-template-columns: 1fr;
+			grid-template-rows: 1fr 1fr;
+		}
+
+		.split-white {
+			clip-path: polygon(0 0, 100% 0, 100% 42%, 0 58%);
+		}
+
+		.split-side {
+			padding: 0 8vw;
+			gap: 10px;
+		}
+
+		.split-side > * {
+			max-width: 100%;
+		}
+
+		.split-left {
+			padding-bottom: 44px;
+		}
+
+		.split-right {
+			padding-top: 44px;
+		}
+
+		.split-side h3 {
+			font-size: clamp(26px, 8vw, 34px);
+		}
+
+		.dates {
+			gap: 6px;
+			margin-bottom: 8px;
+		}
+
+		.dates li {
+			padding: 3px 10px;
+			font-size: 12px;
+		}
+
+		.days {
+			margin-bottom: 6px;
+			font-size: 16px;
+		}
+
+		.more {
+			gap: 14px;
+			padding: 5px 5px 5px 20px;
+			font-size: 14px;
+		}
+
+		.more-arrow {
+			width: 34px;
+			height: 34px;
+		}
+
+		.split-badge {
+			width: 84px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.more-arrow,
+		.dates-wrap,
+		.dates {
+			transition: none;
+		}
+	}
+</style>

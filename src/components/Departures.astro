@@ -1,0 +1,274 @@
+---
+import { trips, formatRange, formatPrice, whatsappLink } from '../data/trips';
+---
+
+<section id="salidas" aria-labelledby="salidas-title">
+	<p class="eyebrow">FECHAS DE SALIDA</p>
+	<h2 id="salidas-title">SALIDAS GRUPALES A CHINA 2027</h2>
+	<p class="lead">Elige tu itinerario y tu fecha. Precios en dólares (USD).</p>
+
+	<div class="trips">
+		{
+			trips.map((trip) => (
+				<article class="trip" id={trip.slug}>
+					<header>
+						<h3>{trip.name}</h3>
+						<p class="trip-duration">{trip.duration}</p>
+						<p class="trip-summary">{trip.summary}</p>
+					</header>
+
+					<ol class="days">
+						{trip.days.map((d) => (
+							<li>
+								<span class="day-range">Día {d.days}</span>
+								<span class="day-text">
+									<strong>{d.place}</strong>
+									{d.text && <> · {d.text}</>}
+								</span>
+							</li>
+						))}
+					</ol>
+
+					<h4>Fechas de salida</h4>
+					<ul class="dates">
+						{trip.departures.map((dep) => {
+							const range = formatRange(dep);
+							return (
+								<li>
+									<span class="date-range">{range}</span>
+									{dep.price ? (
+										<span class="date-price">{formatPrice(dep.price)}</span>
+									) : (
+										<span class="date-price date-price-ask">Consultar precio</span>
+									)}
+									<a
+										class="date-cta"
+										href={whatsappLink(
+											`Hola, quiero viajar con Ala Libre a China: ${trip.name}, salida del ${range}.`
+										)}
+										target="_blank"
+										rel="noopener noreferrer"
+										aria-label={`Cotizar ${trip.name}, salida del ${range}`}
+									>
+										Cotizar
+									</a>
+								</li>
+							);
+						})}
+					</ul>
+				</article>
+			))
+		}
+	</div>
+</section>
+
+<style>
+	#salidas {
+		--gold: #d9b26a;
+		--gold-text: #ecd28f;
+		background: var(--alalibre-navy);
+		padding: 24px 6vw 96px;
+		font-family: var(--font-sans);
+		scroll-margin-top: 57px;
+	}
+
+	.eyebrow {
+		margin: 0 0 6px;
+		color: #ffffff;
+		font-weight: 700;
+		font-size: 14px;
+		letter-spacing: 0.15em;
+		text-align: center;
+	}
+
+	#salidas h2 {
+		margin: 0 0 12px;
+		color: #ffffff;
+		font-weight: 800;
+		font-size: clamp(24px, 3.4vw, 34px);
+		letter-spacing: 0.02em;
+		text-align: center;
+	}
+
+	.lead {
+		margin: 0 auto 48px;
+		max-width: 60ch;
+		color: rgba(255, 255, 255, 0.85);
+		font-size: 16px;
+		line-height: 1.6;
+		text-align: center;
+	}
+
+	.trips {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+		gap: 32px;
+		max-width: 1200px;
+		margin: 0 auto;
+	}
+
+	.trip {
+		display: flex;
+		flex-direction: column;
+		background: #4b4c72;
+		border-radius: 16px;
+		padding: 32px 28px 24px;
+		scroll-margin-top: 72px;
+	}
+
+	.trip h3 {
+		margin: 0 0 4px;
+		color: #ffffff;
+		font-weight: 800;
+		font-size: clamp(22px, 2.2vw, 28px);
+		line-height: 1.15;
+	}
+
+	.trip-duration {
+		margin: 0 0 12px;
+		color: var(--gold-text);
+		font-weight: 700;
+		font-size: 16px;
+		letter-spacing: 0.04em;
+	}
+
+	.trip-summary {
+		margin: 0 0 24px;
+		color: rgba(255, 255, 255, 0.88);
+		font-size: 15px;
+		line-height: 1.6;
+	}
+
+	.days {
+		margin: 0 0 28px;
+		padding: 0;
+		list-style: none;
+		display: grid;
+		gap: 12px;
+	}
+
+	.days li {
+		display: grid;
+		grid-template-columns: 5.2em 1fr;
+		gap: 12px;
+		font-size: 14.5px;
+		line-height: 1.5;
+	}
+
+	.day-range {
+		color: var(--gold-text);
+		font-weight: 700;
+		white-space: nowrap;
+	}
+
+	.day-text {
+		color: rgba(255, 255, 255, 0.88);
+	}
+
+	.day-text strong {
+		color: #ffffff;
+		font-weight: 700;
+	}
+
+	.trip h4 {
+		margin: auto 0 4px;
+		padding-top: 20px;
+		border-top: 1px solid rgba(255, 255, 255, 0.2);
+		color: #ffffff;
+		font-weight: 700;
+		font-size: 14px;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+	}
+
+	.dates {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.dates li {
+		display: grid;
+		grid-template-columns: 1fr auto auto;
+		align-items: center;
+		gap: 8px 16px;
+		padding: 12px 0;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+	}
+
+	.dates li:last-child {
+		border-bottom: 0;
+	}
+
+	.date-range {
+		color: #ffffff;
+		font-weight: 600;
+		font-size: 16px;
+	}
+
+	.date-price {
+		color: #ffffff;
+		font-weight: 700;
+		font-size: 16px;
+		font-variant-numeric: tabular-nums;
+		text-align: right;
+	}
+
+	.date-price-ask {
+		color: rgba(255, 255, 255, 0.7);
+		font-weight: 500;
+		font-size: 14px;
+	}
+
+	.date-cta {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 44px;
+		padding: 0 20px;
+		color: #ffffff;
+		text-decoration: none;
+		font-weight: 700;
+		font-size: 14px;
+		border-radius: 999px;
+		border: 1px solid rgba(255, 255, 255, 0.55);
+		transition:
+			background 0.2s ease,
+			border-color 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.date-cta:hover {
+		background: var(--gold);
+		border-color: var(--gold);
+		color: var(--alalibre-navy);
+	}
+
+	@media (max-width: 700px) {
+		#salidas {
+			padding-bottom: 72px;
+		}
+
+		.trip {
+			padding: 24px 18px 16px;
+		}
+
+		.days li {
+			grid-template-columns: 4.6em 1fr;
+			gap: 8px;
+			font-size: 14px;
+		}
+
+		.dates li {
+			grid-template-columns: 1fr auto;
+		}
+
+		.date-range {
+			grid-column: 1 / -1;
+		}
+
+		.date-price {
+			text-align: left;
+		}
+	}
+</style>

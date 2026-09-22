@@ -1,0 +1,474 @@
+---
+import { ambassadors } from '../data/ambassadors';
+---
+
+<dialog id="amb-modal" aria-labelledby="amb-name">
+	<div class="amb-shell">
+		<div class="amb-info">
+			<p class="amb-eyebrow">Equipo</p>
+			<h3 id="amb-name"></h3>
+			<p class="amb-role"></p>
+			<p class="amb-dest"></p>
+			<div class="amb-bio">
+				<span class="bio-loader" aria-hidden="true"><span class="bio-logo"></span></span>
+				<p class="bio-text"></p>
+			</div>
+		</div>
+
+		<div class="amb-photo">
+			<span class="amb-wm" aria-hidden="true"><span class="amb-watermark"></span></span>
+			<span class="amb-pending" aria-hidden="true"><span class="pending-ring"></span></span>
+		</div>
+
+		<div class="amb-rail">
+			<button type="button" class="amb-close" aria-label="Cerrar">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+			</button>
+			<ul class="amb-thumbs">
+				{
+					ambassadors.map((a, i) => (
+						<li>
+							<button type="button" class="thumb" data-thumb={i} aria-label={`Ver a ${a.name}`}>
+								{a.photo ? <img src={a.thumb ?? a.photo} alt="" loading="lazy" /> : <span class="thumb-logo" />}
+							</button>
+						</li>
+					))
+				}
+			</ul>
+		</div>
+	</div>
+</dialog>
+
+<script type="application/json" id="amb-data" set:html={JSON.stringify(ambassadors)} is:inline></script>
+
+<script>
+	interface Amb {
+		name: string;
+		short?: string;
+		role: string;
+		destination?: string;
+		bio?: string;
+		photo?: string;
+	}
+
+	const dialog = document.getElementById('amb-modal') as HTMLDialogElement | null;
+	const data: Amb[] = JSON.parse(document.getElementById('amb-data')?.textContent ?? '[]');
+
+	if (dialog && data.length) {
+		const $ = <T extends HTMLElement>(sel: string) => dialog.querySelector<T>(sel)!;
+		const nameEl = $('#amb-name');
+		const roleEl = $('.amb-role');
+		const destEl = $('.amb-dest');
+		const bioText = $('.bio-text');
+		const bio = $('.amb-bio');
+		const photoBox = $('.amb-photo');
+		const pending = $('.amb-pending');
+		const thumbs = [...dialog.querySelectorAll<HTMLButtonElement>('[data-thumb]')];
+
+		let current = 0;
+		let opener: HTMLElement | null = null;
+
+		const show = (i: number) => {
+			current = (i + data.length) % data.length;
+			const a = data[current];
+			const first = a.short ?? a.name.split(' ')[0];
+
+			nameEl.textContent = a.name;
+			roleEl.textContent = a.role;
+			destEl.textContent = a.destination ? `Destino recorrido: ${a.destination}` : '';
+			destEl.hidden = !a.destination;
+
+			bio.classList.toggle('is-pending', !a.bio);
+			bioText.textContent =
+				a.bio ??
+				`Estamos afinando la biografía de ${first} — vuelve pronto para conocer más de su historia con Ala Libre.`;
+
+			photoBox.querySelector('.amb-img')?.remove();
+			pending.hidden = !!a.photo;
+			if (a.photo) {
+				const img = document.createElement('img');
+				img.className = 'amb-img';
+				img.src = a.photo;
+				img.alt = a.name;
+				photoBox.append(img);
+			}
+
+			thumbs.forEach((t, k) => {
+				const on = k === current;
+				t.classList.toggle('on', on);
+				t.setAttribute('aria-current', on ? 'true' : 'false');
+			});
+		};
+
+		document.addEventListener('click', (e) => {
+			const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-amb]');
+			if (!btn) return;
+			opener = btn;
+			show(Number(btn.dataset.amb));
+			dialog.showModal();
+			document.documentElement.style.overflow = 'hidden';
+		});
+
+		thumbs.forEach((t) => t.addEventListener('click', () => show(Number(t.dataset.thumb))));
+		dialog.querySelector('.amb-close')?.addEventListener('click', () => dialog.close());
+
+		// Clic fuera del cuadro (sobre el fondo) cierra
+		dialog.addEventListener('click', (e) => {
+			if (e.target === dialog) dialog.close();
+		});
+
+		dialog.addEventListener('keydown', (e) => {
+			if (e.key === 'ArrowRight') show(current + 1);
+			if (e.key === 'ArrowLeft') show(current - 1);
+		});
+
+		dialog.addEventListener('close', () => {
+			document.documentElement.style.overflow = '';
+			opener?.focus();
+		});
+	}
+</script>
+
+<style>
+	dialog {
+		width: min(1024px, calc(100vw - 32px));
+		max-width: none;
+		height: min(640px, calc(100svh - 48px));
+		max-height: none;
+		padding: 0;
+		overflow: hidden;
+		color: #00002e;
+		background: #ffffff;
+		border: 0;
+		border-radius: 28px;
+		font-family: var(--font-sans);
+		box-shadow: 0 30px 80px rgba(0, 0, 30, 0.45);
+	}
+
+	dialog:not([open]) {
+		display: none;
+	}
+
+	dialog::backdrop {
+		background: rgba(0, 0, 30, 0.6);
+		backdrop-filter: blur(6px);
+	}
+
+	dialog[open] {
+		animation: pop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	@keyframes pop {
+		from {
+			opacity: 0;
+			transform: translateY(16px) scale(0.98);
+		}
+	}
+
+	.amb-shell {
+		display: grid;
+		grid-template-columns: 312px 1fr 92px;
+		height: 100%;
+	}
+
+	.amb-info {
+		padding: 50px 36px 36px;
+		overflow-y: auto;
+	}
+
+	.amb-eyebrow {
+		margin: 0 0 14px;
+		color: #8b8b98;
+		font-weight: 700;
+		font-size: 11px;
+		letter-spacing: 0.24em;
+		text-transform: uppercase;
+	}
+
+	#amb-name {
+		margin: 0 0 14px;
+		font-weight: 800;
+		font-size: 26px;
+		line-height: 1.1;
+		text-wrap: balance;
+	}
+
+	.amb-role {
+		margin: 0 0 6px;
+		color: #077f96;
+		font-weight: 700;
+		font-size: 14px;
+	}
+
+	.amb-dest {
+		margin: 0;
+		color: #6b6b7c;
+		font-size: 13px;
+	}
+
+	.amb-bio {
+		display: flex;
+		gap: 14px;
+		margin-top: 22px;
+	}
+
+	.bio-text {
+		margin: 0;
+		color: #6b6b7c;
+		font-size: 14px;
+		line-height: 1.6;
+	}
+
+	.bio-loader {
+		position: relative;
+		display: none;
+		flex: none;
+		place-items: center;
+		width: 40px;
+		height: 40px;
+		border: 2.5px solid #e2e0da;
+		border-top-color: #0aa8c6;
+		border-radius: 50%;
+		animation: spin 1.4s linear infinite;
+	}
+
+	.is-pending .bio-loader {
+		display: grid;
+	}
+
+	.bio-logo {
+		width: 50%;
+		aspect-ratio: 1;
+		background: #00002e;
+		mask: url('/img/isotipo.svg') center / contain no-repeat;
+		-webkit-mask: url('/img/isotipo.svg') center / contain no-repeat;
+		animation: spin 1.4s linear infinite reverse;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	.amb-photo {
+		position: relative;
+		display: grid;
+		place-items: end center;
+		overflow: hidden;
+		background: #ffffff;
+		border-left: 1px solid #ebe9e4;
+		border-right: 1px solid #ebe9e4;
+	}
+
+	.amb-wm {
+		position: absolute;
+		top: 42%;
+		left: 50%;
+		width: min(100%, 600px);
+		aspect-ratio: 1;
+		transform: translate(-50%, -50%);
+		opacity: 0.8;
+		/* El desenfoque va en este contenedor: junto a la máscara el borde quedaría nítido */
+		filter: blur(3px);
+	}
+
+	.amb-watermark {
+		display: block;
+		width: 100%;
+		height: 100%;
+		background: #00002e;
+		mask: url('/img/isotipo.svg') center / contain no-repeat;
+		-webkit-mask: url('/img/isotipo.svg') center / contain no-repeat;
+	}
+
+	.amb-photo :global(.amb-img) {
+		position: relative;
+		max-width: 62%;
+		max-height: 83%;
+		object-fit: contain;
+		object-position: bottom;
+	}
+
+	.amb-pending {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+	}
+
+	.amb-pending[hidden] {
+		display: none;
+	}
+
+	.pending-ring {
+		width: 88px;
+		height: 88px;
+		border: 4px solid rgba(255, 255, 255, 0.45);
+		border-top-color: #0aa8c6;
+		border-radius: 50%;
+		animation: spin 1.4s linear infinite;
+	}
+
+	.amb-rail {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 8px;
+		padding: 12px 13px;
+		overflow-y: auto;
+		background: #f5f4f0;
+	}
+
+	.amb-close {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 36px;
+		height: 36px;
+		padding: 0;
+		color: #00002e;
+		background: #e9e7e2;
+		border: 0;
+		border-radius: 50%;
+		cursor: pointer;
+		transition: background 0.2s ease;
+	}
+
+	.amb-close:hover {
+		background: #dcdad4;
+	}
+
+	.amb-close svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	.amb-thumbs {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.thumb {
+		display: grid;
+		place-items: center;
+		width: 58px;
+		height: 58px;
+		padding: 0;
+		overflow: hidden;
+		background: #e8e6e1;
+		border: 2px solid transparent;
+		border-radius: 14px;
+		cursor: pointer;
+		transition:
+			border-color 0.2s ease,
+			transform 0.2s ease;
+	}
+
+	.thumb img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: top;
+	}
+
+	.thumb-logo {
+		width: 40%;
+		aspect-ratio: 1;
+		background: #00002e;
+		opacity: 0.7;
+		mask: url('/img/isotipo.svg') center / contain no-repeat;
+		-webkit-mask: url('/img/isotipo.svg') center / contain no-repeat;
+	}
+
+	.thumb:hover {
+		transform: translateY(-2px);
+	}
+
+	.thumb.on {
+		border-color: #0aa8c6;
+		box-shadow: 0 0 0 2px #ffffff inset;
+	}
+
+	@media (max-width: 800px) {
+		dialog {
+			height: min(calc(100svh - 24px), 720px);
+			width: calc(100vw - 16px);
+			border-radius: 22px;
+		}
+
+		.amb-shell {
+			grid-template-columns: minmax(0, 1fr);
+			grid-template-rows: auto minmax(180px, 1fr) auto;
+		}
+
+		.amb-rail {
+			grid-row: 1;
+			flex-direction: row-reverse;
+			justify-content: space-between;
+			padding: 10px 12px;
+			overflow: visible;
+		}
+
+		.amb-rail {
+			min-width: 0;
+		}
+
+		.amb-thumbs {
+			flex: 1;
+			flex-direction: row;
+			gap: 6px;
+			min-width: 0;
+			overflow-x: auto;
+			scrollbar-width: none;
+		}
+
+		.thumb {
+			width: 44px;
+			height: 44px;
+			flex: none;
+			border-radius: 10px;
+		}
+
+		.amb-photo {
+			grid-row: 2;
+			border: 0;
+		}
+
+		.amb-info {
+			grid-row: 3;
+			padding: 20px 22px 26px;
+			max-height: 38svh;
+		}
+
+		.amb-eyebrow {
+			margin-bottom: 8px;
+		}
+
+		#amb-name {
+			font-size: 26px;
+			margin-bottom: 10px;
+		}
+
+		.amb-bio {
+			margin-top: 14px;
+		}
+
+		.bio-text {
+			font-size: 15px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		dialog[open],
+		.bio-loader,
+		.bio-logo,
+		.pending-ring {
+			animation: none;
+		}
+	}
+</style>

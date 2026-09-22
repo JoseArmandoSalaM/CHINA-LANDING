@@ -1,0 +1,1026 @@
+---
+import { formatRange, formatPrice, whatsappLink } from '../data/trips';
+import type { Trip } from '../data/trips';
+import { ambassadors } from '../data/ambassadors';
+import { reviews, googleSummary } from '../data/reviews';
+
+interface Props {
+	trip: Trip;
+}
+
+const { trip } = Astro.props;
+const [big, small, tile] = trip.gallery;
+const extra = trip.gallery.length - 2;
+// Las tarjetas usan la miniatura ligera; el visor de galería carga la foto completa.
+const thumb = (src: string) => src.replace('-opt.webp', '-sm.webp');
+---
+
+<div class="detail" data-trip={trip.slug} hidden>
+	<div class="detail-left">
+		<button class="back" type="button" data-close>
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+			<span>Volver a itinerarios</span>
+		</button>
+
+		<p class="d-eyebrow">Viaja a China</p>
+		<h3 class="d-title">{trip.name}</h3>
+		<p class="d-duration">{trip.duration}</p>
+
+		<h4>Día a día</h4>
+		<ol class="d-days">
+			{
+				trip.days.map((d) => (
+					<li>
+						<span class="d-range">Día {d.days}</span>
+						<span class="d-text">
+							<strong>{d.place}</strong>
+							{d.text && <> · {d.text}</>}
+						</span>
+					</li>
+				))
+			}
+		</ol>
+
+		<div class="d-lists">
+			<section>
+				<h4>Qué incluye</h4>
+				<ul class="list list-yes">
+					{trip.included.map((item) => <li>{item}</li>)}
+				</ul>
+			</section>
+			<section>
+				<h4>Qué no incluye</h4>
+				<ul class="list list-no">
+					{trip.notIncluded.map((item) => <li>{item}</li>)}
+				</ul>
+			</section>
+		</div>
+	</div>
+
+	<div class="detail-right">
+		<div class="card">
+			<div class="gallery" data-images={JSON.stringify(trip.gallery)}>
+				<button type="button" class="g-tile g-big" data-g="0" aria-label={`Ampliar foto: ${big.alt}`}>
+					<img src={thumb(big.src)} alt="" width="640" height="429" loading="lazy" />
+				</button>
+				<button type="button" class="g-tile" data-g="1" aria-label={`Ampliar foto: ${small.alt}`}>
+					<img src={thumb(small.src)} alt="" width="640" height="429" loading="lazy" />
+				</button>
+				<button type="button" class="g-tile g-more" data-g="2" aria-label={`Ver las ${trip.gallery.length} fotos`}>
+					<img src={thumb(tile.src)} alt="" width="640" height="429" loading="lazy" />
+					<span aria-hidden="true">+{extra}</span>
+				</button>
+			</div>
+
+			<h3 class="c-title">China</h3>
+			<p class="c-desc">{trip.summary}</p>
+
+			<div class="dep-box">
+				<div class="dep-head">
+					<p class="dep-label">{trip.departures.length} salidas grupales</p>
+					<div class="dep-arrows">
+						<button type="button" class="round" data-dep-scroll="-1" aria-label="Ver salidas anteriores">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg>
+						</button>
+						<button type="button" class="round" data-dep-scroll="1" aria-label="Ver más salidas">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+						</button>
+					</div>
+				</div>
+				<ul class="dep-list" tabindex="0" aria-label={`Fechas de salida de ${trip.name}`}>
+					{
+						trip.departures.map((dep) => {
+							const range = formatRange(dep);
+							return (
+								<li>
+									<a
+										class="dep-row"
+										href={whatsappLink(
+											`Hola, quiero viajar con Ala Libre a China: ${trip.name}, salida del ${range}.`
+										)}
+										target="_blank"
+										rel="noopener noreferrer"
+										aria-label={`Cotizar ${trip.name}, salida del ${range}`}
+									>
+										<span class="dep-main">
+											<span class="dep-date">{range}</span>
+											<span class="dep-sub">{trip.duration}</span>
+										</span>
+										<span class="dep-side">
+											<span class:list={['dep-price', !dep.price && 'dep-ask']}>
+												{dep.price ? formatPrice(dep.price) : 'Consultar precio'}
+											</span>
+											<span class="dep-cta">
+												Cotizar
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+											</span>
+										</span>
+									</a>
+								</li>
+							);
+						})
+					}
+				</ul>
+			</div>
+
+			{
+				reviews.length > 0 && (
+					<div class="reviews" data-reviews>
+						<div class="rev-head">
+							<p>Reseñas de Google</p>
+							{googleSummary && (
+								<p class="rev-score">
+									{googleSummary.rating} <span class="star">★</span> ({googleSummary.count})
+								</p>
+							)}
+						</div>
+						<div class="rev-viewport">
+							{reviews.map((r, i) => (
+								<blockquote class="rev" hidden={i > 0}>
+									<p class="rev-text">“{r.text}”</p>
+									<p class="rev-meta">
+										<strong>{r.author}</strong>
+										<span class="star" aria-label={`${r.rating} de 5 estrellas`}>
+											{'★'.repeat(r.rating)}
+										</span>
+										<span class="rev-when">{r.when}</span>
+									</p>
+								</blockquote>
+							))}
+						</div>
+						{reviews.length > 1 && (
+							<div class="rev-foot">
+								<div class="dots" aria-hidden="true">
+									{reviews.map((_, i) => (
+										<span class:list={['dot', i === 0 && 'on']} />
+									))}
+								</div>
+								<div class="rev-arrows">
+									<button type="button" class="round big" data-rev="-1" aria-label="Reseña anterior">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+									</button>
+									<button type="button" class="round big" data-rev="1" aria-label="Reseña siguiente">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+									</button>
+								</div>
+							</div>
+						)}
+					</div>
+				)
+			}
+
+			<div class="amb-box">
+				<p class="amb-label">Embajadores que pueden acompañarte</p>
+				<ul class="amb-row">
+					{
+						ambassadors.map((a, i) => (
+							<li>
+								<button type="button" class="amb" data-amb={i} aria-label={`Ver a ${a.name}`}>
+									<span class="avatar">
+										{a.photo ? (
+											<img src={a.thumb ?? a.photo} alt="" loading="lazy" />
+										) : (
+											<>
+												<span class="avatar-ring" />
+												<span class="avatar-logo" />
+											</>
+										)}
+									</span>
+									<span class="amb-name">{a.short ?? a.name.split(' ')[0]}</span>
+									{a.destination && <span class="amb-dest">{a.destination}</span>}
+								</button>
+							</li>
+						))
+					}
+				</ul>
+			</div>
+
+			<a
+				class="quote-cta"
+				href={whatsappLink(`Hola, quiero cotizar un viaje a China: ${trip.name}.`)}
+				target="_blank"
+				rel="noopener noreferrer"
+				aria-label={`Cotizar un viaje: ${trip.name}`}
+			>
+				<span>Cotizar un viaje</span>
+				<span class="quote-arrow" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+				</span>
+			</a>
+		</div>
+	</div>
+</div>
+
+<script>
+	// Flechas de la lista de salidas
+	document.querySelectorAll<HTMLButtonElement>('[data-dep-scroll]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const list = btn.closest('.dep-box')?.querySelector<HTMLElement>('.dep-list');
+			const row = list?.firstElementChild as HTMLElement | null;
+			if (!list || !row) return;
+			list.scrollBy({ top: Number(btn.dataset.depScroll) * row.offsetHeight, behavior: 'smooth' });
+		});
+	});
+
+	// Carrusel de reseñas
+	document.querySelectorAll<HTMLElement>('[data-reviews]').forEach((box) => {
+		const items = [...box.querySelectorAll<HTMLElement>('.rev')];
+		const dots = [...box.querySelectorAll<HTMLElement>('.dot')];
+		let i = 0;
+		const show = (n: number) => {
+			i = (n + items.length) % items.length;
+			items.forEach((el, k) => (el.hidden = k !== i));
+			dots.forEach((el, k) => el.classList.toggle('on', k === i));
+		};
+		box.querySelectorAll<HTMLButtonElement>('[data-rev]').forEach((b) =>
+			b.addEventListener('click', () => show(i + Number(b.dataset.rev)))
+		);
+	});
+</script>
+
+<style>
+	.detail {
+		--ink: #00002e;
+		--aqua: #0aa8c6;
+		--aqua-dark: #077f96;
+		--muted: #6b6b7c;
+		--card: #f1efeb;
+		font-family: var(--font-sans);
+	}
+
+	.detail[hidden] {
+		display: none;
+	}
+
+	/* ---------- Columna izquierda: información ---------- */
+	.detail-left {
+		color: var(--ink);
+	}
+
+	.back {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		margin: 0 0 18px;
+		padding: 10px 18px 10px 12px;
+		font: inherit;
+		font-weight: 600;
+		font-size: 14px;
+		color: var(--ink);
+		background: transparent;
+		border: 1px solid rgba(0, 0, 46, 0.35);
+		border-radius: 999px;
+		cursor: pointer;
+		transition:
+			background 0.2s ease,
+			border-color 0.2s ease;
+	}
+
+	.back:hover {
+		background: rgba(0, 0, 46, 0.06);
+		border-color: var(--ink);
+	}
+
+	.back svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	.d-eyebrow {
+		margin: 0 0 6px;
+		color: var(--gold-dark);
+		font-weight: 700;
+		font-size: 14px;
+		letter-spacing: 0.32em;
+		text-transform: uppercase;
+	}
+
+	.d-title {
+		margin: 0;
+		font-weight: 800;
+		font-size: clamp(26px, 2.4vw, 44px);
+		line-height: 1.04;
+		text-transform: uppercase;
+		letter-spacing: -0.01em;
+		text-wrap: balance;
+	}
+
+	.d-duration {
+		margin: 6px 0 14px;
+		color: rgba(0, 0, 46, 0.75);
+		font-weight: 500;
+		font-size: clamp(15px, 1.05vw, 20px);
+	}
+
+	.detail-left h4 {
+		margin: 0 0 8px;
+		padding-top: 12px;
+		border-top: 1px solid rgba(0, 0, 46, 0.15);
+		font-weight: 700;
+		font-size: 14px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+
+	.d-days {
+		margin: 0 0 14px;
+		padding: 0;
+		list-style: none;
+		display: grid;
+		gap: 6px;
+	}
+
+	.d-days li {
+		display: grid;
+		grid-template-columns: 5.2em 1fr;
+		gap: 12px;
+		font-size: clamp(13.5px, 0.92vw, 17px);
+		line-height: 1.4;
+	}
+
+	.d-range {
+		color: var(--gold-dark);
+		font-weight: 700;
+		white-space: nowrap;
+	}
+
+	.d-text {
+		color: rgba(0, 0, 46, 0.85);
+	}
+
+	.d-text strong {
+		color: var(--ink);
+		font-weight: 700;
+	}
+
+	.d-lists {
+		display: grid;
+		grid-template-columns: 1.5fr 1fr;
+		gap: 24px;
+		align-items: start;
+	}
+
+	.d-lists section {
+		margin-bottom: 0;
+	}
+
+	.list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		display: grid;
+		gap: 6px;
+	}
+
+	.list li {
+		position: relative;
+		padding-left: 30px;
+		font-size: clamp(13.5px, 0.92vw, 17px);
+		line-height: 1.4;
+		color: rgba(0, 0, 46, 0.88);
+	}
+
+	.list li::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0.2em;
+		width: 1.15em;
+		height: 1.15em;
+		background: var(--aqua-dark);
+		mask: var(--icon) center / contain no-repeat;
+		-webkit-mask: var(--icon) center / contain no-repeat;
+	}
+
+	.list-yes li::before {
+		--icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12.5l5 5L20 6.5'/%3E%3C/svg%3E");
+	}
+
+	.list-no li::before {
+		background: #a23b3b;
+		--icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E");
+	}
+
+	/* ---------- Columna derecha: tarjeta ---------- */
+	.card {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 12px;
+		color: var(--ink);
+		background: var(--card);
+		border-radius: 24px;
+	}
+
+	.gallery {
+		display: grid;
+		grid-template-columns: 2fr 1fr;
+		grid-template-rows: 1fr 1fr;
+		gap: 8px;
+		height: clamp(96px, 8.2vw, 150px);
+	}
+
+	.g-tile {
+		position: relative;
+		display: block;
+		width: 100%;
+		height: 100%;
+		padding: 0;
+		overflow: hidden;
+		background: #dcdad4;
+		border: 0;
+		border-radius: 16px;
+		cursor: zoom-in;
+	}
+
+	.g-tile img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+		transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	.g-tile:hover img {
+		transform: scale(1.06);
+	}
+
+	.g-big {
+		grid-row: 1 / 3;
+	}
+
+	.g-more img {
+		filter: blur(3px) brightness(0.55);
+		transform: scale(1.1);
+	}
+
+	.g-more:hover img {
+		transform: scale(1.16);
+	}
+
+	.g-more span {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		color: #ffffff;
+		font-weight: 700;
+		font-size: clamp(16px, 1.4vw, 28px);
+	}
+
+	.c-title {
+		margin: 0 6px -7px;
+		font-weight: 800;
+		font-size: clamp(22px, 1.7vw, 34px);
+		line-height: 1.1;
+	}
+
+	.c-desc {
+		margin: 0 6px;
+		color: var(--muted);
+		font-size: clamp(13px, 0.9vw, 16px);
+		line-height: 1.55;
+	}
+
+	.dep-box {
+		padding: 12px 8px 8px;
+		background: #ffffff;
+		border-radius: 20px;
+	}
+
+	.dep-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 0 8px;
+		margin-bottom: 4px;
+	}
+
+	.dep-label {
+		margin: 0;
+		color: #8b8b98;
+		font-weight: 700;
+		font-size: 12px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+
+	.dep-arrows,
+	.rev-arrows {
+		display: flex;
+		gap: 8px;
+	}
+
+	.round {
+		display: grid;
+		place-items: center;
+		width: 32px;
+		height: 32px;
+		padding: 0;
+		color: var(--ink);
+		background: #ffffff;
+		border: 1px solid #cfcdc7;
+		border-radius: 50%;
+		cursor: pointer;
+		transition:
+			background 0.2s ease,
+			border-color 0.2s ease;
+	}
+
+	.round.big {
+		width: 44px;
+		height: 44px;
+	}
+
+	.round:hover {
+		background: #f1efeb;
+		border-color: var(--ink);
+	}
+
+	.round svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	.dep-list {
+		max-height: 232px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		overflow-y: auto;
+		border-radius: 12px;
+		scrollbar-width: thin;
+		scrollbar-color: var(--aqua) var(--ink);
+	}
+
+	/* Filas tipo tabla: alternan blanco y gris claro */
+	.dep-list li {
+		background: #ffffff;
+		transition: background 0.2s ease;
+	}
+
+	/* Toda la fila es el enlace a WhatsApp */
+	.dep-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 14px;
+		padding: 10px 14px;
+		color: inherit;
+		text-decoration: none;
+		cursor: pointer;
+	}
+
+	.dep-row:focus-visible {
+		outline: 2px solid var(--aqua);
+		outline-offset: -2px;
+	}
+
+	.dep-list li:nth-child(odd) {
+		background: #efeeea;
+	}
+
+	.dep-list li:hover {
+		background: #d6eef3;
+	}
+
+	.dep-main,
+	.dep-side,
+	.dep-date,
+	.dep-sub,
+	.dep-price {
+		display: block;
+	}
+
+	.dep-main,
+	.dep-side {
+		min-width: 0;
+	}
+
+	.dep-side {
+		text-align: right;
+		flex: none;
+	}
+
+	.dep-date {
+		margin: 0;
+		font-weight: 700;
+		font-size: clamp(14px, 1vw, 17px);
+	}
+
+	.dep-sub {
+		margin: 2px 0 0;
+		color: var(--muted);
+		font-size: 12px;
+	}
+
+	.dep-price {
+		margin: 0;
+		font-weight: 800;
+		font-size: clamp(14px, 1vw, 17px);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.dep-ask {
+		color: var(--muted);
+		font-weight: 500;
+		font-size: 12.5px;
+	}
+
+	/* Botón de cada fila (toda la fila es el enlace, esto es la señal visible) */
+	.dep-cta {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		margin-top: 4px;
+		padding: 5px 9px 5px 13px;
+		color: #ffffff;
+		background: var(--ink);
+		border-radius: 999px;
+		font-weight: 700;
+		font-size: 12.5px;
+		line-height: 1.2;
+		transition:
+			background 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.dep-row:hover .dep-cta,
+	.dep-row:focus-visible .dep-cta {
+		color: var(--ink);
+		background: var(--gold, #d9b26a);
+	}
+
+	.dep-cta svg {
+		width: 14px;
+		height: 14px;
+		color: var(--gold, #d9b26a);
+		transition: color 0.2s ease;
+	}
+
+	.dep-row:hover .dep-cta svg,
+	.dep-row:focus-visible .dep-cta svg {
+		color: var(--ink);
+	}
+
+
+	/* ---------- Reseñas ---------- */
+	.reviews {
+		padding: 16px 8px 4px;
+		border-top: 1px solid #dcdad4;
+	}
+
+	.rev-head {
+		display: flex;
+		justify-content: space-between;
+		gap: 12px;
+		margin-bottom: 12px;
+	}
+
+	.rev-head p {
+		margin: 0;
+		color: #6b6b7c;
+		font-weight: 600;
+		font-size: 14px;
+	}
+
+	.rev-score {
+		color: var(--ink) !important;
+		font-weight: 700 !important;
+	}
+
+	.star {
+		color: #e0a93a;
+		letter-spacing: 2px;
+	}
+
+	.rev {
+		margin: 0;
+	}
+
+	.rev[hidden] {
+		display: none;
+	}
+
+	.rev-text {
+		margin: 0 0 10px;
+		color: #45455a;
+		font-size: clamp(14.5px, 1.05vw, 18px);
+		line-height: 1.5;
+	}
+
+	.rev-meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 4px 12px;
+		margin: 0;
+		font-size: 14px;
+	}
+
+	.rev-when {
+		color: #8b8b98;
+		font-size: 13px;
+	}
+
+	.rev-foot {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-top: 14px;
+	}
+
+	.dots {
+		display: flex;
+		gap: 6px;
+	}
+
+	.dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 999px;
+		background: #cfcdc7;
+		transition: background 0.25s ease;
+	}
+
+	.dot.on {
+		width: 24px;
+		background: var(--ink);
+	}
+
+	/* ---------- Botón "Cotizar un viaje" ---------- */
+	.quote-cta {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 5px 5px 5px 22px;
+		color: #ffffff;
+		background: var(--ink);
+		border-radius: 999px;
+		text-decoration: none;
+		font-weight: 700;
+		font-size: clamp(14px, 1vw, 16px);
+		letter-spacing: 0.01em;
+		box-shadow: 0 10px 24px rgba(0, 0, 46, 0.22);
+		transition:
+			background 0.2s ease,
+			transform 0.2s ease;
+	}
+
+	.quote-cta:hover {
+		background: #0a0a4a;
+		transform: translateY(-1px);
+	}
+
+	.quote-cta:focus-visible {
+		outline: 2px solid var(--aqua);
+		outline-offset: 3px;
+	}
+
+	.quote-arrow {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 34px;
+		height: 34px;
+		border-radius: 50%;
+		background: var(--gold, #d9b26a);
+		color: var(--ink);
+		transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	.quote-arrow svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	.quote-cta:hover .quote-arrow {
+		transform: translateX(4px);
+	}
+
+	/* ---------- Embajadores ---------- */
+	.amb-box {
+		padding: 12px 4px 2px;
+		border-top: 1px solid #dcdad4;
+	}
+
+	.amb-label {
+		margin: 0 6px 8px;
+		color: #8b8b98;
+		font-weight: 700;
+		font-size: 12px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+
+	.amb-row {
+		display: grid;
+		grid-template-columns: repeat(8, minmax(0, 1fr));
+		gap: 6px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.amb {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 4px;
+		width: 100%;
+		padding: 8px 2px;
+		font: inherit;
+		text-align: center;
+		color: var(--ink);
+		background: transparent;
+		border: 0;
+		border-radius: 14px;
+		cursor: pointer;
+		transition: background 0.2s ease;
+	}
+
+	.amb:hover {
+		background: rgba(0, 0, 46, 0.05);
+	}
+
+	.avatar {
+		position: relative;
+		display: grid;
+		place-items: center;
+		width: clamp(44px, 3.8vw, 68px);
+		aspect-ratio: 1;
+		margin-bottom: 4px;
+		overflow: hidden;
+		background: #e8e6e1;
+		border: 1.5px dashed #c4c2bb;
+		border-radius: 50%;
+		transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	.amb:hover .avatar {
+		transform: scale(1.06);
+	}
+
+	.avatar img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: top;
+	}
+
+	.avatar-logo {
+		width: 38%;
+		aspect-ratio: 1;
+		background: var(--ink);
+		mask: url('/img/isotipo.svg') center / contain no-repeat;
+		-webkit-mask: url('/img/isotipo.svg') center / contain no-repeat;
+	}
+
+	.avatar-ring {
+		position: absolute;
+		inset: 24%;
+		border: 2.5px solid #d8d6d0;
+		border-top-color: var(--aqua);
+		border-radius: 50%;
+		animation: spin 1.4s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	.amb-name {
+		font-weight: 700;
+		font-size: clamp(11px, 0.8vw, 13px);
+		line-height: 1.2;
+	}
+
+	.amb-dest {
+		color: #8b8b98;
+		font-size: clamp(9.5px, 0.65vw, 11.5px);
+		line-height: 1.25;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.avatar-ring {
+			animation: none;
+		}
+	}
+
+	/* ---------- Escritorio: dos columnas sobre el fondo diagonal ---------- */
+	@media (min-width: 901px) {
+		.detail {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			height: 100%;
+		}
+
+		/* La sección mide lo mismo que la pantalla; si el contenido no cabe, la columna se desplaza sola */
+		.detail-left,
+		.detail-right {
+			height: 100%;
+			overflow-y: auto;
+			scrollbar-width: thin;
+		}
+
+		.detail-left {
+			padding: 88px 5vw 24px max(7vw, 84px);
+			scrollbar-color: rgba(0, 0, 46, 0.3) transparent;
+		}
+
+		/* La columna de la tarjeta no se desplaza: se ve completa en la pantalla (la lista de fechas sí tiene su propio scroll) */
+		.detail-right {
+			padding: 88px max(7vw, 84px) 24px 5vw;
+			overflow: hidden;
+		}
+	}
+
+	/* ---------- Móvil / tablet: bloques apilados ---------- */
+	@media (max-width: 900px) {
+		.detail-left {
+			padding: 96px 6vw 40px;
+			background: #ffffff;
+		}
+
+		.detail-right {
+			padding: 32px 4vw 56px;
+			background: var(--alalibre-navy);
+		}
+
+		.d-title {
+			font-size: clamp(28px, 8vw, 40px);
+		}
+
+		.gallery {
+			height: 150px;
+		}
+
+		.avatar {
+			width: clamp(52px, 14vw, 80px);
+		}
+	}
+
+	@media (max-width: 600px) {
+		.d-lists {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.d-days li {
+			grid-template-columns: 4.6em 1fr;
+			gap: 8px;
+		}
+
+		.dep-row {
+			flex-wrap: wrap;
+		}
+
+		.amb-row {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			row-gap: 10px;
+		}
+	}
+	/* Ventanas bajas (p. ej. laptops con escala 125%): se compacta la tarjeta para que se vea completa,
+	   con su botón "Cotizar un viaje", sin desplazarse */
+	@media (min-width: 901px) and (max-height: 820px) {
+		.gallery {
+			height: 84px;
+		}
+
+		.card {
+			gap: 10px;
+		}
+
+		.dep-list {
+			max-height: 205px;
+		}
+
+		.amb-box {
+			padding-top: 10px;
+		}
+
+		.avatar {
+			width: 46px;
+			margin-bottom: 2px;
+		}
+	}
+	@media (min-width: 901px) and (max-height: 720px) {
+		.gallery {
+			height: 64px;
+		}
+
+		.c-desc {
+			font-size: 12px;
+			line-height: 1.4;
+		}
+
+		.dep-list {
+			max-height: 172px;
+		}
+	}
+</style>

@@ -3,11 +3,11 @@
 
 <header id="menu">
 	<div class="menu-inner">
-		<a href="#destinations" class="side-link contact left">Salidas</a>
+		<a href="#salidas" class="side-link contact left">Salidas</a>
 
 		<a href="/" class="logo" aria-label="Ala Libre — inicio">
 			<picture>
-				<img src="/IsotipoBlanco.png" alt="Ala Libre" />
+				<img src="/img/isotipo.svg" alt="Ala Libre" width="64" height="64" />
 			</picture>
 		</a>
 
@@ -30,7 +30,8 @@
 		}
 	};
 
-	onScroll();
+	// La primera lectura espera a que la página termine de cargar: hacerla antes obliga a calcular el layout de golpe.
+	window.addEventListener('load', onScroll, { once: true });
 	window.addEventListener('scroll', onScroll, { passive: true });
 
 	// El logo sube al inicio sin recargar cuando ya estamos en la portada.

@@ -1,0 +1,346 @@
+---
+---
+
+<dialog id="gallery-modal" aria-label="Galería de fotos">
+	<div class="gal-shell">
+		<button type="button" class="gal-close" aria-label="Cerrar galería">
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+		</button>
+
+		<button type="button" class="gal-nav gal-prev" aria-label="Foto anterior">
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+		</button>
+
+		<figure class="gal-figure">
+			<div class="gal-stage"></div>
+			<figcaption class="gal-caption">
+				<span class="gal-text"></span>
+				<span class="gal-count"></span>
+			</figcaption>
+		</figure>
+
+		<button type="button" class="gal-nav gal-next" aria-label="Foto siguiente">
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+		</button>
+
+		<ul class="gal-thumbs"></ul>
+	</div>
+</dialog>
+
+<script>
+	interface Photo {
+		src: string;
+		alt: string;
+	}
+
+	const dialog = document.getElementById('gallery-modal') as HTMLDialogElement | null;
+
+	if (dialog) {
+		const stage = dialog.querySelector<HTMLElement>('.gal-stage')!;
+		const text = dialog.querySelector<HTMLElement>('.gal-text')!;
+		const count = dialog.querySelector<HTMLElement>('.gal-count')!;
+		const thumbsEl = dialog.querySelector<HTMLElement>('.gal-thumbs')!;
+
+		let photos: Photo[] = [];
+		let current = 0;
+		let opener: HTMLElement | null = null;
+
+		const show = (i: number) => {
+			current = (i + photos.length) % photos.length;
+			const p = photos[current];
+
+			const img = document.createElement('img');
+			img.className = 'gal-img';
+			img.src = p.src;
+			img.alt = p.alt;
+			stage.replaceChildren(img);
+
+			text.textContent = p.alt;
+			count.textContent = `${current + 1} / ${photos.length}`;
+			thumbsEl.querySelectorAll('button').forEach((b, k) => {
+				b.classList.toggle('on', k === current);
+				b.setAttribute('aria-current', k === current ? 'true' : 'false');
+			});
+		};
+
+		const build = () => {
+			thumbsEl.replaceChildren(
+				...photos.map((p, k) => {
+					const li = document.createElement('li');
+					const b = document.createElement('button');
+					b.type = 'button';
+					b.className = 'gal-thumb';
+					b.setAttribute('aria-label', `Ver foto ${k + 1}: ${p.alt}`);
+					const t = document.createElement('img');
+					t.src = p.src;
+					t.alt = '';
+					b.append(t);
+					b.addEventListener('click', () => show(k));
+					li.append(b);
+					return li;
+				})
+			);
+		};
+
+		document.addEventListener('click', (e) => {
+			const tile = (e.target as HTMLElement).closest<HTMLElement>('[data-g]');
+			const box = tile?.closest<HTMLElement>('[data-images]');
+			if (!tile || !box) return;
+			photos = JSON.parse(box.dataset.images ?? '[]');
+			if (!photos.length) return;
+			opener = tile;
+			build();
+			show(Number(tile.dataset.g));
+			dialog.showModal();
+			document.documentElement.style.overflow = 'hidden';
+		});
+
+		dialog.querySelector('.gal-prev')?.addEventListener('click', () => show(current - 1));
+		dialog.querySelector('.gal-next')?.addEventListener('click', () => show(current + 1));
+		dialog.querySelector('.gal-close')?.addEventListener('click', () => dialog.close());
+
+		// Clic sobre el fondo (fuera de la foto y los controles) cierra
+		dialog.addEventListener('click', (e) => {
+			const t = e.target as HTMLElement;
+			if (t === dialog || t.classList.contains('gal-shell') || t.classList.contains('gal-stage')) dialog.close();
+		});
+
+		dialog.addEventListener('keydown', (e) => {
+			if (e.key === 'ArrowRight') show(current + 1);
+			if (e.key === 'ArrowLeft') show(current - 1);
+		});
+
+		dialog.addEventListener('close', () => {
+			document.documentElement.style.overflow = '';
+			stage.replaceChildren();
+			opener?.focus();
+		});
+	}
+</script>
+
+<style>
+	dialog {
+		width: 100vw;
+		max-width: none;
+		height: 100svh;
+		max-height: none;
+		margin: 0;
+		padding: 0;
+		overflow: hidden;
+		color: #ffffff;
+		background: transparent;
+		border: 0;
+		font-family: var(--font-sans);
+	}
+
+	dialog:not([open]) {
+		display: none;
+	}
+
+	dialog::backdrop {
+		background: rgba(0, 0, 20, 0.88);
+		backdrop-filter: blur(8px);
+	}
+
+	dialog[open] {
+		animation: fade 0.3s ease;
+	}
+
+	@keyframes fade {
+		from {
+			opacity: 0;
+		}
+	}
+
+	.gal-shell {
+		position: relative;
+		display: grid;
+		grid-template-columns: 72px 1fr 72px;
+		grid-template-rows: 1fr auto;
+		width: 100%;
+		height: 100%;
+		padding: 24px 16px 20px;
+	}
+
+	.gal-figure {
+		grid-column: 2;
+		grid-row: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		min-height: 0;
+		margin: 0;
+	}
+
+	.gal-stage {
+		display: grid;
+		place-items: center;
+		flex: 1;
+		width: 100%;
+		min-height: 0;
+	}
+
+	.gal-stage :global(.gal-img) {
+		max-width: 100%;
+		max-height: 100%;
+		object-fit: contain;
+		border-radius: 14px;
+		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+		animation: fade 0.35s ease;
+	}
+
+	.gal-caption {
+		display: flex;
+		gap: 16px;
+		align-items: baseline;
+		justify-content: center;
+		padding-top: 14px;
+		font-size: 15px;
+	}
+
+	.gal-count {
+		color: rgba(255, 255, 255, 0.6);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.gal-nav,
+	.gal-close {
+		display: grid;
+		place-items: center;
+		width: 52px;
+		height: 52px;
+		padding: 0;
+		color: #ffffff;
+		background: rgba(255, 255, 255, 0.12);
+		border: 1px solid rgba(255, 255, 255, 0.3);
+		border-radius: 50%;
+		cursor: pointer;
+		transition: background 0.2s ease;
+	}
+
+	.gal-nav:hover,
+	.gal-close:hover {
+		background: rgba(255, 255, 255, 0.25);
+	}
+
+	.gal-nav svg,
+	.gal-close svg {
+		width: 22px;
+		height: 22px;
+	}
+
+	.gal-nav {
+		align-self: center;
+		justify-self: center;
+		grid-row: 1;
+	}
+
+	.gal-prev {
+		grid-column: 1;
+	}
+
+	.gal-next {
+		grid-column: 3;
+	}
+
+	.gal-close {
+		position: absolute;
+		top: 20px;
+		right: 20px;
+		z-index: 2;
+	}
+
+	.gal-thumbs {
+		grid-column: 1 / -1;
+		grid-row: 2;
+		display: flex;
+		justify-content: center;
+		gap: 10px;
+		margin: 14px 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.gal-thumbs :global(.gal-thumb) {
+		display: block;
+		width: 84px;
+		height: 56px;
+		padding: 0;
+		overflow: hidden;
+		background: transparent;
+		border: 2px solid transparent;
+		border-radius: 10px;
+		opacity: 0.6;
+		cursor: pointer;
+		transition:
+			opacity 0.2s ease,
+			border-color 0.2s ease;
+	}
+
+	.gal-thumbs :global(.gal-thumb:hover),
+	.gal-thumbs :global(.gal-thumb.on) {
+		opacity: 1;
+	}
+
+	.gal-thumbs :global(.gal-thumb.on) {
+		border-color: #d9b26a;
+	}
+
+	.gal-thumbs :global(.gal-thumb img) {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+	}
+
+	@media (max-width: 700px) {
+		.gal-shell {
+			grid-template-columns: 1fr 1fr;
+			grid-template-rows: 1fr auto auto;
+			padding: 64px 12px 16px;
+		}
+
+		.gal-figure {
+			grid-column: 1 / -1;
+		}
+
+		.gal-nav {
+			grid-row: 2;
+			width: 46px;
+			height: 46px;
+			margin-top: 12px;
+		}
+
+		.gal-prev {
+			grid-column: 1;
+			justify-self: start;
+		}
+
+		.gal-next {
+			grid-column: 2;
+			justify-self: end;
+		}
+
+		.gal-thumbs {
+			grid-row: 3;
+		}
+
+		.gal-thumbs :global(.gal-thumb) {
+			width: 56px;
+			height: 40px;
+		}
+
+		.gal-close {
+			top: 12px;
+			right: 12px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		dialog[open],
+		.gal-stage :global(.gal-img) {
+			animation: none;
+		}
+	}
+</style>

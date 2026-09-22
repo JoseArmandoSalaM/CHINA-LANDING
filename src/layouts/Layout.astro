@@ -1,14 +1,21 @@
 ---
+import { Font } from 'astro:assets';
+
 interface Props {
 	title?: string;
 	description?: string;
 	image?: string;
+	imageAlt?: string;
+	/** true en páginas que no deben aparecer en Google (p. ej. el 404) */
+	noindex?: boolean;
 }
 
 const {
-	title = 'Viaje a China 14 Días | Ala Libre Agencia de Viajes',
-	description = "Descubre China con Ala Libre: 14 días recorriendo Beijing, Xi'an, Guilin, Zhangjiajie y Shanghái. Alojamiento, guías expertos y transporte incluidos. Cotiza tu viaje con un diseñador de viajes.",
-	image = '/viajesgrupales.png',
+	title = 'Viajes Grupales a China 2027 | 17 días y 16 noches',
+	description = 'Viaja a China en grupo durante 17 días y 16 noches, recorriendo Beijing, Xi’an, Chengdu, Chongqing, Zhangjiajie, Guilin, Shenzhen y Shanghái.',
+	image = '/og-image.jpg',
+	imageAlt = 'Viajes grupales a China 2027 con Ala Libre',
+	noindex = false,
 } = Astro.props;
 
 const siteUrl = Astro.site ?? new URL('https://china.alalibreagency.com');
@@ -17,22 +24,34 @@ const ogImageURL = new URL(image, siteUrl);
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="es-MX">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<link rel="icon" type="image/png" href="/IsotipoBlanco.png" />
-		<link rel="apple-touch-icon" href="/IsotipoBlanco.png" />
+		<link rel="icon" href="/favicon.ico" sizes="48x48" />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
 		<meta name="generator" content={Astro.generator} />
 
 		<title>{title}</title>
 		<meta name="description" content={description} />
 		<link rel="canonical" href={canonicalURL} />
+		<link rel="alternate" hreflang="es-MX" href={canonicalURL} />
+		<link rel="alternate" hreflang="x-default" href={canonicalURL} />
+		<link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+		<meta
+			name="robots"
+			content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1'}
+		/>
+		<meta name="author" content="Ala Libre" />
+		<meta name="theme-color" content="#00002e" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		<meta property="og:image" content={ogImageURL.href} />
+		<meta property="og:image:alt" content={imageAlt} />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta property="og:image:type" content="image/jpeg" />
@@ -44,13 +63,11 @@ const ogImageURL = new URL(image, siteUrl);
 		<meta name="twitter:title" content={title} />
 		<meta name="twitter:description" content={description} />
 		<meta name="twitter:image" content={ogImageURL} />
+		<meta name="twitter:image:alt" content={imageAlt} />
 
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link
-			href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700;800&display=swap"
-			rel="stylesheet"
-		/>
+		<slot name="head" />
+
+		<Font cssVariable="--font-league-spartan" preload={[{ subset: 'latin' }]} />
 	</head>
 	<body>
 		<slot />
@@ -63,8 +80,8 @@ const ogImageURL = new URL(image, siteUrl);
 		--alalibre-navy: #00002e; /* principal */
 		--alalibre-mist: #e5ebf5; /* secundario */
 		--alalibre-aqua: #0aa8c6; /* terciario */
-		--font-sans: 'League Spartan', sans-serif;
-		--font-display: 'League Spartan', sans-serif;
+		--font-sans: var(--font-league-spartan);
+		--font-display: var(--font-league-spartan);
 	}
 
 	html {
@@ -88,6 +105,19 @@ const ogImageURL = new URL(image, siteUrl);
 
 	* {
 		box-sizing: border-box;
+	}
+
+	/* Texto solo para lectores de pantalla */
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 
 	::selection {

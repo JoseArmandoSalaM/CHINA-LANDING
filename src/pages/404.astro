@@ -1,0 +1,80 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+	title="Página no encontrada | Ala Libre"
+	description="La página que buscas no existe. Regresa a los viajes grupales a China 2027 de Ala Libre."
+	noindex
+>
+	<main class="not-found">
+		<img src="/img/isotipo.svg" alt="Ala Libre" width="88" height="88" />
+		<p class="code">404</p>
+		<h1>Esta página no existe</h1>
+		<p class="text">Puede que el enlace haya cambiado. Mientras tanto, tu próximo viaje sigue esperando.</p>
+		<a class="home" href="/">Ver viajes grupales a China 2027</a>
+	</main>
+</Layout>
+
+<style>
+	.not-found {
+		min-height: 100svh;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 14px;
+		padding: 48px 6vw;
+		text-align: center;
+		font-family: var(--font-sans);
+		background: var(--alalibre-navy);
+	}
+
+	.code {
+		margin: 12px 0 0;
+		color: #d9b26a;
+		font-weight: 700;
+		font-size: 14px;
+		letter-spacing: 0.32em;
+		text-indent: 0.32em;
+	}
+
+	h1 {
+		margin: 0;
+		color: #ffffff;
+		font-weight: 800;
+		font-size: clamp(30px, 5vw, 52px);
+		line-height: 1.05;
+		text-transform: uppercase;
+	}
+
+	.text {
+		margin: 0 0 12px;
+		max-width: 44ch;
+		color: rgba(255, 255, 255, 0.85);
+		font-size: 17px;
+		line-height: 1.6;
+	}
+
+	.home {
+		display: inline-flex;
+		align-items: center;
+		min-height: 48px;
+		padding: 0 28px;
+		color: #ffffff;
+		text-decoration: none;
+		font-weight: 600;
+		border: 1px solid rgba(255, 255, 255, 0.55);
+		border-radius: 999px;
+		transition:
+			background 0.2s ease,
+			border-color 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.home:hover {
+		color: var(--alalibre-navy);
+		background: #d9b26a;
+		border-color: #d9b26a;
+	}
+</style>
