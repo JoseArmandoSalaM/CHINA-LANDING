@@ -203,18 +203,18 @@ export const trips: Trip[] = [
 export const totalDepartures = trips.reduce((n, t) => n + t.departures.length, 0);
 
 const MONTHS = [
-	'enero',
-	'febrero',
-	'marzo',
-	'abril',
-	'mayo',
-	'junio',
-	'julio',
-	'agosto',
-	'septiembre',
-	'octubre',
-	'noviembre',
-	'diciembre',
+	'Enero',
+	'Febrero',
+	'Marzo',
+	'Abril',
+	'Mayo',
+	'Junio',
+	'Julio',
+	'Agosto',
+	'Septiembre',
+	'Octubre',
+	'Noviembre',
+	'Diciembre',
 ];
 
 const parts = (iso: string) => {
