@@ -1,0 +1,1514 @@
+---
+import { trips, formatShort, formatRange, whatsappLink, PAYMENT_PLAN } from '../data/trips';
+
+// Solo se ofrecen las salidas con precio cargado.
+const planTrips = trips.map((t) => ({
+	slug: t.slug,
+	name: t.name,
+	duration: t.duration,
+	departures: t.departures
+		.filter((d) => d.priceDouble)
+		.map((d) => ({
+			start: d.start,
+			short: formatShort(d).replace(/[A-Za-zÁÉÍÓÚáéíóú]{4,}/g, (m) => m.slice(0, 3)),
+			range: formatRange(d),
+			priceDouble: d.priceDouble!,
+			priceSingle: d.priceSingle ?? null,
+		})),
+}));
+
+const cheapest = (i: number) => Math.min(...planTrips[i].departures.map((d) => d.priceDouble));
+const money = (n: number) => `$${n.toLocaleString('en-US')}`;
+
+const config = {
+	...PAYMENT_PLAN,
+	trips: planTrips,
+	wa: whatsappLink('__TEXT__'),
+};
+const firstMonths = 6;
+const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
+---
+
+<section id="plan-de-pagos" class="pp" aria-labelledby="pp-title">
+	<h2 id="pp-title">VIAJA A CHINA 2027 A TU RITMO</h2>
+	<p class="pp-lead">
+		Aparta tu lugar con un anticipo y paga el resto en mensualidades. Arma tu plan y ve al instante
+		cuánto y cuándo pagas.
+	</p>
+
+	<div class="pp-grid">
+		<form class="pp-form" id="pp-form" novalidate>
+			<div class="pp-col">
+			<fieldset class="pp-field">
+				<legend>Elige tu viaje</legend>
+				<div class="pp-trips">
+					{
+						planTrips.map((t, i) => (
+							<label class="pp-opt pp-trip">
+								<input type="radio" name="trip" value={i} checked={i === 0} />
+								<span class="pp-trip-name">{t.name}</span>
+								<span class="pp-trip-meta">
+									{t.duration} · desde {money(cheapest(i))}
+								</span>
+							</label>
+						))
+					}
+				</div>
+			</fieldset>
+
+			<fieldset class="pp-field">
+				<legend>Fecha de salida</legend>
+				{
+					planTrips.map((t, i) => (
+						<div class="pp-chips" data-trip-dates={i} hidden={i !== 0}>
+							{t.departures.map((d, j) => (
+								<label class="pp-opt pp-chip">
+									<input type="radio" name={`dep-${i}`} value={j} checked={j === 0} />
+									<span>{d.short}</span>
+								</label>
+							))}
+						</div>
+					))
+				}
+			</fieldset>
+			</div>
+
+			<div class="pp-col">
+			<div class="pp-row">
+				<fieldset class="pp-field">
+					<legend>Habitación</legend>
+					<div class="pp-seg">
+						<label class="pp-opt">
+							<input type="radio" name="occ" value="double" checked />
+							<span>Doble</span>
+						</label>
+						<label class="pp-opt">
+							<input type="radio" name="occ" value="single" />
+							<span>Sencilla</span>
+						</label>
+					</div>
+				</fieldset>
+
+				<fieldset class="pp-field">
+					<legend>Viajeros</legend>
+					<div class="pp-stepper">
+						<button type="button" id="pp-less" aria-label="Menos viajeros">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg>
+						</button>
+						<output id="pp-travelers" aria-live="polite">2</output>
+						<button type="button" id="pp-more" aria-label="Más viajeros">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"></path></svg>
+						</button>
+					</div>
+				</fieldset>
+			</div>
+
+			<div class="pp-field pp-months">
+				<label for="pp-range" class="pp-legend-like">Meses para pagar</label>
+				<div class="pp-months-head">
+					<output id="pp-months-out" for="pp-range">{firstMonths} meses</output>
+					<span id="pp-max-hint" class="pp-max-hint"></span>
+				</div>
+				<input
+					type="range"
+					id="pp-range"
+					class="pp-range"
+					min="1"
+					max={PAYMENT_PLAN.maxMonths}
+					step="1"
+					value={firstMonths}
+					aria-describedby="pp-rule"
+				/>
+				<p id="pp-rule" class="pp-rule">El pago debe quedar cubierto 2 meses antes de la salida.</p>
+			</div>
+			</div>
+
+			<div class="pp-bottom">
+			<dl class="pp-ledger" id="pp-ledger" aria-live="polite">
+				<div>
+					<dt>Total del viaje</dt>
+					<dd data-l="total">—</dd>
+				</div>
+				<div>
+					<dt>Anticipo hoy</dt>
+					<dd data-l="deposit">—</dd>
+				</div>
+				<div>
+					<dt data-l="balance-label">Saldo</dt>
+					<dd data-l="balance">—</dd>
+				</div>
+				<div>
+					<dt>Primer pago <small>(completas el {coveragePct}%)</small></dt>
+					<dd data-l="first">—</dd>
+				</div>
+				<div data-l-row="next">
+					<dt>Después, cada mes ≈</dt>
+					<dd data-l="next">—</dd>
+				</div>
+			</dl>
+
+			<div class="pp-action">
+				<p class="pp-action-hint">Genera tu plan y ve fecha por fecha cuánto pagas.</p>
+				<p id="pp-blocked" class="pp-blocked" hidden></p>
+				<button type="submit" class="pp-generate" id="pp-generate">
+					<span>Generar mi plan de pagos</span>
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+				</button>
+			</div>
+			</div>
+		</form>
+
+		<div class="pp-result" id="pp-result" data-state="idle" aria-live="polite" aria-busy="false">
+			<div class="pp-idle" id="pp-idle">
+				<p class="pp-idle-title">Tu plan de pagos aparecerá aquí</p>
+				<ol class="pp-plan pp-ghost" aria-hidden="true">
+					<li><span class="pp-node"></span><span class="pp-what">Hoy · tu anticipo</span></li>
+					<li><span class="pp-node"></span><span class="pp-what">Cada mes · tus mensualidades</span></li>
+					<li><span class="pp-node"></span><span class="pp-what">2 meses antes · viaje liquidado</span></li>
+					<li><span class="pp-node pp-node-dep"></span><span class="pp-what">Salida a China</span></li>
+				</ol>
+			</div>
+			<div class="pp-loading" id="pp-loading" hidden>
+				<div class="pp-loader" aria-hidden="true">
+					<span></span><span></span><span></span><span></span>
+				</div>
+				<p class="pp-loading-title">Generando tu plan de pagos perfecto…</p>
+				<p class="pp-loading-sub" id="pp-loading-sub"></p>
+			</div>
+			<div class="pp-out" id="pp-out" hidden></div>
+		</div>
+	</div>
+
+	<p class="pp-foot">*Plan de referencia en pesos mexicanos (MXN). Consulta condiciones y disponibilidad con tu asesor.</p>
+
+	<script id="pp-config" type="application/json" set:html={JSON.stringify(config)} />
+</section>
+
+<script>
+	interface Dep {
+		start: string;
+		short: string;
+		range: string;
+		priceDouble: number;
+		priceSingle: number | null;
+	}
+	interface PlanTrip {
+		slug: string;
+		name: string;
+		duration: string;
+		departures: Dep[];
+	}
+	interface Config {
+		depositPerPerson: number;
+		firstPaymentCoverage: number;
+		settleMonthsBefore: number;
+		maxMonths: number;
+		maxTravelers: number;
+		trips: PlanTrip[];
+		wa: string;
+	}
+	interface Payment {
+		date: Date;
+		amount: number;
+		cum: number;
+	}
+
+	const root = document.getElementById('plan-de-pagos');
+	const cfg: Config | null = root
+		? JSON.parse(document.getElementById('pp-config')!.textContent || 'null')
+		: null;
+
+	if (root && cfg) {
+		const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+		const form = $<HTMLFormElement>('pp-form');
+		const range = $<HTMLInputElement>('pp-range');
+		const monthsOut = $('pp-months-out');
+		const maxHint = $('pp-max-hint');
+		const rule = $('pp-rule');
+		const travelersOut = $('pp-travelers');
+		const lessBtn = $<HTMLButtonElement>('pp-less');
+		const moreBtn = $<HTMLButtonElement>('pp-more');
+		const ledger = $('pp-ledger');
+		const blocked = $('pp-blocked');
+		const generate = $<HTMLButtonElement>('pp-generate');
+		const result = $('pp-result');
+		const idle = $('pp-idle');
+		const loading = $('pp-loading');
+		const loadingSub = $('pp-loading-sub');
+		const out = $('pp-out');
+
+		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+		const money = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
+		const fmtDate = (d: Date) => `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+		const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+		const parseISO = (iso: string) => {
+			const [y, m, d] = iso.split('-').map(Number);
+			return new Date(y, m - 1, d);
+		};
+		const addMonths = (date: Date, n: number) => {
+			const r = new Date(date.getFullYear(), date.getMonth() + n, 1);
+			const last = new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate();
+			r.setDate(Math.min(date.getDate(), last));
+			return r;
+		};
+		const now = new Date();
+		const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+		let travelers = 2;
+		let generated = false;
+		let timers: number[] = [];
+
+		// ---------- Estado actual del formulario ----------
+		const tripIdx = () => Number(form.querySelector<HTMLInputElement>('input[name="trip"]:checked')?.value ?? 0);
+		const depIdx = () =>
+			Number(form.querySelector<HTMLInputElement>(`input[name="dep-${tripIdx()}"]:checked`)?.value ?? 0);
+		const occupancy = () =>
+			form.querySelector<HTMLInputElement>('input[name="occ"]:checked')?.value === 'single' ? 'single' : 'double';
+		const current = () => {
+			const trip = cfg.trips[tripIdx()];
+			return { trip, dep: trip.departures[depIdx()] };
+		};
+
+		// Última mensualidad posible: el pago debe quedar cubierto `settleMonthsBefore` meses antes de la salida.
+		const deadlineOf = (dep: Dep) => addMonths(parseISO(dep.start), -cfg.settleMonthsBefore);
+		const maxMonthsFor = (dep: Dep) => {
+			const deadline = deadlineOf(dep);
+			let n = 0;
+			for (let i = 1; i <= cfg.maxMonths; i++) if (addMonths(today, i) <= deadline) n = i;
+			return n;
+		};
+		const pricePerPerson = (dep: Dep) => (occupancy() === 'single' && dep.priceSingle ? dep.priceSingle : dep.priceDouble);
+
+		const buildPlan = (dep: Dep, months: number) => {
+			const total = pricePerPerson(dep) * travelers;
+			const deposit = Math.min(cfg.depositPerPerson * travelers, total);
+			const balance = total - deposit;
+			const amounts: number[] = [];
+			if (months === 1) {
+				amounts.push(balance);
+			} else {
+				// El primer pago lleva el acumulado (anticipo + primer pago) al % pedido; nunca menos que una parte igual.
+				const target = Math.round(total * cfg.firstPaymentCoverage);
+				const first = Math.min(balance, Math.max(target - deposit, Math.ceil(balance / months)));
+				const rest = balance - first;
+				const base = Math.floor(rest / (months - 1));
+				amounts.push(first);
+				for (let i = 1; i < months; i++) amounts.push(base);
+				amounts[months - 1] += rest - base * (months - 1);
+			}
+			let cum = deposit;
+			const payments: Payment[] = amounts.map((amount, i) => {
+				cum += amount;
+				return { date: addMonths(today, i + 1), amount, cum };
+			});
+			return { total, deposit, balance, payments, next: months > 1 ? amounts[1] : 0 };
+		};
+
+		// ---------- Pintar controles y resumen ----------
+		let legendTimer = 0;
+		const flashRule = () => {
+			rule.classList.remove('is-flash');
+			void rule.offsetWidth;
+			rule.classList.add('is-flash');
+			window.clearTimeout(legendTimer);
+			legendTimer = window.setTimeout(() => rule.classList.remove('is-flash'), 2400);
+		};
+
+		const paintRange = (max: number) => {
+			const v = Number(range.value);
+			const span = cfg.maxMonths - 1;
+			range.style.setProperty('--v', `${((v - 1) / span) * 100}%`);
+			range.style.setProperty('--l', `${(Math.max(max, 1) - 1) / span * 100}%`);
+			monthsOut.textContent = plural(v, 'mes', 'meses');
+		};
+
+		const sync = (announce = true) => {
+			const { dep } = current();
+			const max = maxMonthsFor(dep);
+			let months = Number(range.value);
+
+			if (max < 1) {
+				range.disabled = true;
+				blocked.hidden = false;
+				blocked.textContent =
+					'Esta salida está muy cerca para pagar en mensualidades: el viaje debe quedar liquidado 2 meses antes. Escríbenos y te ayudamos con el pago.';
+				generate.disabled = true;
+				maxHint.textContent = '';
+				paintRange(1);
+				ledger.querySelectorAll('dd').forEach((dd) => (dd.textContent = '—'));
+				return;
+			}
+			range.disabled = false;
+			blocked.hidden = true;
+			generate.disabled = false;
+
+			if (months > max) {
+				months = max;
+				range.value = String(max);
+				if (announce) flashRule();
+			}
+			paintRange(max);
+			maxHint.textContent = `Máximo para esta salida: ${plural(max, 'mes', 'meses')}`;
+
+			const plan = buildPlan(dep, months);
+			const set = (k: string, text: string) => {
+				const el = ledger.querySelector(`[data-l="${k}"]`);
+				if (el) el.textContent = text;
+			};
+			set('total', money(plan.total));
+			set('deposit', money(plan.deposit));
+			set('balance-label', `Saldo en ${plural(months, 'pago', 'pagos')}`);
+			set('balance', money(plan.balance));
+			set('first', money(plan.payments[0].amount));
+			set('next', months > 1 ? money(plan.next) : '—');
+			ledger.querySelector<HTMLElement>('[data-l-row="next"]')!.hidden = months === 1;
+
+			travelersOut.textContent = String(travelers);
+			lessBtn.disabled = travelers <= 1;
+			moreBtn.disabled = travelers >= cfg.maxTravelers;
+
+			if (generated) resetPlan();
+		};
+
+		// Si el visitante cambia cualquier dato, el plan generado desaparece: no queda una tabla que ya no corresponde.
+		const resetPlan = () => {
+			generated = false;
+			out.innerHTML = '';
+			show('idle');
+		};
+
+		// ---------- Eventos de los controles ----------
+		form.addEventListener('change', (e) => {
+			const t = e.target as HTMLInputElement;
+			if (t.name === 'trip') {
+				form.querySelectorAll<HTMLElement>('[data-trip-dates]').forEach((g) => {
+					g.hidden = Number(g.dataset.tripDates) !== tripIdx();
+				});
+			}
+			sync();
+		});
+
+		range.addEventListener('input', () => {
+			const { dep } = current();
+			const max = maxMonthsFor(dep);
+			if (max >= 1 && Number(range.value) > max) {
+				range.value = String(max);
+				flashRule();
+			}
+			sync();
+		});
+
+		lessBtn.addEventListener('click', () => {
+			travelers = Math.max(1, travelers - 1);
+			sync();
+		});
+		moreBtn.addEventListener('click', () => {
+			travelers = Math.min(cfg.maxTravelers, travelers + 1);
+			sync();
+		});
+
+		// ---------- Generar el plan ----------
+		const clearTimers = () => {
+			timers.forEach((t) => window.clearTimeout(t));
+			timers = [];
+		};
+
+		const show = (state: 'idle' | 'loading' | 'result') => {
+			result.dataset.state = state;
+			idle.hidden = state !== 'idle';
+			loading.hidden = state !== 'loading';
+			out.hidden = state !== 'result';
+			result.setAttribute('aria-busy', String(state === 'loading'));
+		};
+
+		const renderResult = () => {
+			const { trip, dep } = current();
+			const months = Number(range.value);
+			const plan = buildPlan(dep, months);
+			const deadline = deadlineOf(dep);
+			const occ = occupancy() === 'single' ? 'sencilla' : 'doble';
+			const pct = (cum: number) => Math.round((cum / plan.total) * 100);
+
+			const rows: string[] = [];
+			let i = 0;
+			rows.push(`
+				<li style="--i:${i++}">
+					<span class="pp-node"></span>
+					<span class="pp-when"><strong>${fmtDate(today)}</strong><span class="pp-what">Anticipo · hoy</span></span>
+					<span class="pp-amt">${money(plan.deposit)}<small>${pct(plan.deposit)}% pagado</small></span>
+				</li>`);
+			plan.payments.forEach((p, k) => {
+				const last = k === plan.payments.length - 1;
+				rows.push(`
+				<li style="--i:${i++}"${last ? ' class="pp-last"' : ''}>
+					<span class="pp-node"></span>
+					<span class="pp-when"><strong>${fmtDate(p.date)}</strong><span class="pp-what">Pago ${k + 1} de ${plan.payments.length}${last ? '<em>Liquidado</em>' : ''}</span></span>
+					<span class="pp-amt">${money(p.amount)}<small>${pct(p.cum)}% pagado</small></span>
+				</li>`);
+			});
+			rows.push(`
+				<li style="--i:${i++}" class="pp-dep">
+					<span class="pp-node pp-node-dep"></span>
+					<span class="pp-when"><strong>${fmtDate(parseISO(dep.start))}</strong><span class="pp-what">Salida a China</span></span>
+					<span class="pp-amt pp-amt-plane">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 13.5 21 4l-4.5 16-5-5.5-3 3v-4.5L2.5 13.5Z"></path></svg>
+					</span>
+				</li>`);
+
+			const msg =
+				`Hola, quiero apartar mi lugar con Ala Libre: ${trip.name}, salida del ${dep.range}. ` +
+				`${plural(travelers, 'viajero', 'viajeros')}, habitación ${occ}. ` +
+				`Plan: anticipo de ${money(plan.deposit)} y ${plural(months, 'pago mensual', 'pagos mensuales')}, ` +
+				`total ${money(plan.total)} MXN.`;
+
+			out.style.setProperty('--n', String(rows.length));
+			out.innerHTML = `
+				<div class="pp-out-head">
+					<h3>Tu plan de pagos</h3>
+					<p>${trip.name} · ${dep.range}</p>
+					<p>${plural(travelers, 'viajero', 'viajeros')} · habitación ${occ} · liquidado a más tardar el ${fmtDate(deadline)}</p>
+				</div>
+				<ol class="pp-plan">${rows.join('')}</ol>
+				<div class="pp-out-foot">
+				<div class="pp-total"><span>Total del viaje</span><strong>${money(plan.total)} MXN</strong></div>
+				<a class="pp-cta" href="${cfg.wa.replace('__TEXT__', encodeURIComponent(msg))}" target="_blank" rel="noopener noreferrer">
+					Quiero apartar mi lugar
+				</a>
+				</div>`;
+			show('result');
+			generated = true;
+		};
+
+		const LOADING_LINES = [
+			'Cruzando tu fecha de salida…',
+			'Repartiendo el saldo mes a mes…',
+			'Ajustando tus fechas de pago…',
+		];
+
+		form.addEventListener('submit', (e) => {
+			e.preventDefault();
+			if (generate.disabled) return;
+			clearTimers();
+			generate.disabled = true;
+			show('loading');
+
+			const wait = reduce ? 250 : 2100;
+			if (!reduce) {
+				let n = 0;
+				loadingSub.textContent = LOADING_LINES[0];
+				const tick = () => {
+					n = (n + 1) % LOADING_LINES.length;
+					loadingSub.textContent = LOADING_LINES[n];
+					timers.push(window.setTimeout(tick, 700));
+				};
+				timers.push(window.setTimeout(tick, 700));
+			} else {
+				loadingSub.textContent = '';
+			}
+
+			// En pantallas apiladas el resultado queda debajo del formulario: se lleva a la vista.
+			if (window.matchMedia('(max-width: 1279px)').matches) {
+				result.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+			}
+
+			timers.push(
+				window.setTimeout(() => {
+					clearTimers();
+					generate.disabled = false;
+					sync();
+					renderResult();
+				}, wait)
+			);
+		});
+
+		show('idle');
+		sync(false);
+	}
+</script>
+
+<style is:global>
+	.pp {
+		--gold: #d9b26a;
+		--gold-text: #ecd28f;
+		--pp-card: #4b4c72;
+		--pp-ease: cubic-bezier(0.16, 1, 0.3, 1);
+		background: var(--alalibre-navy);
+		--pp-zoom: 1;
+		padding: 36px 5vw 48px;
+		font-family: var(--font-sans);
+		scroll-margin-top: 57px;
+	}
+
+	.pp h2 {
+		margin: 0 auto 10px;
+		color: #ffffff;
+		font-weight: 800;
+		font-size: clamp(24px, 3.4vw, 34px);
+		letter-spacing: 0.02em;
+		line-height: 1.1;
+		text-align: center;
+		text-wrap: balance;
+	}
+
+	.pp-lead {
+		margin: 0 auto 24px;
+		max-width: 90ch;
+		color: rgba(255, 255, 255, 0.85);
+		font-size: 16px;
+		line-height: 1.6;
+		text-align: center;
+	}
+
+	.pp-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 20px;
+		max-width: min(1400px, calc(90vw / var(--pp-zoom)));
+		margin: 0 auto;
+	}
+
+	/* En pantallas grandes toda la sección crece proporcionalmente (el ancho útil sigue siendo el 90% de la ventana) */
+	.pp > * {
+		zoom: var(--pp-zoom);
+	}
+
+	@media (min-width: 1600px) {
+		.pp {
+			--pp-zoom: 1.12;
+		}
+	}
+
+	@media (min-width: 1900px) {
+		.pp {
+			--pp-zoom: 1.3;
+		}
+	}
+
+	@media (min-width: 2300px) {
+		.pp {
+			--pp-zoom: 1.6;
+		}
+	}
+
+	@media (min-width: 3000px) {
+		.pp {
+			--pp-zoom: 2.1;
+		}
+	}
+
+	@media (min-width: 1280px) {
+		.pp-grid {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+			gap: 28px;
+		}
+	}
+
+	/* ---------- Formulario (izquierda) ---------- */
+	.pp-form {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding: 24px 26px;
+		background: var(--pp-card);
+		border-radius: 16px;
+	}
+
+	.pp-col,
+	.pp-bottom {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		min-width: 0;
+	}
+
+	.pp-bottom {
+		padding-top: 14px;
+		border-top: 1px solid rgba(255, 255, 255, 0.2);
+	}
+
+	.pp-action {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.pp-action-hint {
+		display: none;
+		margin: 0;
+		color: rgba(255, 255, 255, 0.82);
+		font-size: 14px;
+		line-height: 1.45;
+	}
+
+	/* Con espacio, el formulario se reparte en dos columnas y el resumen queda junto al botón */
+	@media (min-width: 701px) {
+		.pp-form {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+			gap: 16px 28px;
+		}
+
+		.pp-bottom {
+			grid-column: 1 / -1;
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+			gap: 0 28px;
+			align-items: end;
+		}
+
+		.pp-action-hint {
+			display: block;
+		}
+	}
+
+	.pp-field {
+		min-width: 0;
+		margin: 0;
+		padding: 0;
+		border: 0;
+	}
+
+	.pp-field legend,
+	.pp-legend-like {
+		display: block;
+		padding: 0;
+		margin: 0 0 10px;
+		color: #ffffff;
+		font-weight: 700;
+		font-size: 14px;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+	}
+
+	.pp-row {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 16px;
+	}
+
+	/* Opciones: radios nativos ocultos; la etiqueta es el control */
+	.pp-opt {
+		position: relative;
+		display: flex;
+		cursor: pointer;
+	}
+
+	.pp-opt input {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		margin: 0;
+		opacity: 0;
+		cursor: pointer;
+	}
+
+	.pp-opt:has(input:focus-visible) {
+		outline: 2px solid var(--alalibre-aqua);
+		outline-offset: 3px;
+	}
+
+	.pp-trips {
+		display: grid;
+		gap: 8px;
+	}
+
+	.pp-trip {
+		flex-direction: column;
+		gap: 1px;
+		padding: 9px 14px;
+		border: 1px solid rgba(255, 255, 255, 0.32);
+		border-radius: 12px;
+		transition:
+			background 0.2s ease,
+			border-color 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.pp-trip-name {
+		color: #ffffff;
+		font-weight: 700;
+		font-size: 16px;
+		line-height: 1.25;
+	}
+
+	.pp-trip-meta {
+		color: rgba(255, 255, 255, 0.78);
+		font-size: 13.5px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.pp-trip:hover {
+		border-color: var(--gold);
+	}
+
+	.pp-trip:has(input:checked) {
+		background: var(--gold);
+		border-color: var(--gold);
+	}
+
+	.pp-trip:has(input:checked) .pp-trip-name,
+	.pp-trip:has(input:checked) .pp-trip-meta {
+		color: var(--alalibre-navy);
+	}
+
+	.pp-chips {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 96px), 1fr));
+		gap: 8px;
+	}
+
+	.pp-chips[hidden] {
+		display: none;
+	}
+
+	.pp-chip,
+	.pp-seg .pp-opt {
+		align-items: center;
+		justify-content: center;
+		min-height: 42px;
+		padding: 0 10px;
+		color: #ffffff;
+		border: 1px solid rgba(255, 255, 255, 0.32);
+		border-radius: 999px;
+		font-weight: 600;
+		font-size: 14px;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+		transition:
+			background 0.2s ease,
+			border-color 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.pp-chip:hover,
+	.pp-seg .pp-opt:hover {
+		border-color: var(--gold);
+	}
+
+	.pp-chip:has(input:checked),
+	.pp-seg .pp-opt:has(input:checked) {
+		color: var(--alalibre-navy);
+		background: var(--gold);
+		border-color: var(--gold);
+	}
+
+	.pp-seg {
+		display: flex;
+		gap: 8px;
+	}
+
+	.pp-seg .pp-opt {
+		flex: 1 1 0;
+		padding: 0 18px;
+	}
+
+	.pp-stepper {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		border: 1px solid rgba(255, 255, 255, 0.32);
+		border-radius: 999px;
+	}
+
+	.pp-stepper button {
+		display: grid;
+		place-items: center;
+		width: 44px;
+		height: 44px;
+		padding: 0;
+		color: #ffffff;
+		background: transparent;
+		border: 0;
+		border-radius: 50%;
+		cursor: pointer;
+		transition:
+			background 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.pp-stepper button:hover:not(:disabled) {
+		background: var(--gold);
+		color: var(--alalibre-navy);
+	}
+
+	.pp-stepper button:disabled {
+		opacity: 0.35;
+		cursor: not-allowed;
+	}
+
+	.pp-stepper svg,
+	.pp-generate svg {
+		width: 18px;
+		height: 18px;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2.2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.pp-stepper output {
+		min-width: 2ch;
+		color: #ffffff;
+		font-weight: 800;
+		font-size: 18px;
+		font-variant-numeric: tabular-nums;
+		text-align: center;
+	}
+
+	/* Meses de pago */
+	.pp-months-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 4px 16px;
+		margin-bottom: 4px;
+	}
+
+	.pp-months-head output {
+		color: var(--gold-text);
+		font-weight: 800;
+		font-size: 22px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.pp-max-hint {
+		color: rgba(255, 255, 255, 0.78);
+		font-size: 13.5px;
+	}
+
+	.pp-range {
+		--v: 0%;
+		--l: 100%;
+		display: block;
+		width: 100%;
+		height: 32px;
+		margin: 0;
+		background: transparent;
+		-webkit-appearance: none;
+		appearance: none;
+		cursor: pointer;
+	}
+
+	.pp-range:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+
+	.pp-range::-webkit-slider-runnable-track {
+		height: 6px;
+		border-radius: 999px;
+		background: linear-gradient(
+			90deg,
+			var(--gold) 0 var(--v),
+			rgba(255, 255, 255, 0.42) var(--v) var(--l),
+			rgba(255, 255, 255, 0.12) var(--l) 100%
+		);
+	}
+
+	.pp-range::-moz-range-track {
+		height: 6px;
+		border-radius: 999px;
+		background: linear-gradient(
+			90deg,
+			var(--gold) 0 var(--v),
+			rgba(255, 255, 255, 0.42) var(--v) var(--l),
+			rgba(255, 255, 255, 0.12) var(--l) 100%
+		);
+	}
+
+	.pp-range::-webkit-slider-thumb {
+		width: 24px;
+		height: 24px;
+		margin-top: -9px;
+		background: #ffffff;
+		border: 3px solid var(--gold);
+		border-radius: 50%;
+		box-shadow: 0 2px 8px rgba(0, 0, 46, 0.5);
+		-webkit-appearance: none;
+		appearance: none;
+	}
+
+	.pp-range::-moz-range-thumb {
+		width: 18px;
+		height: 18px;
+		background: #ffffff;
+		border: 3px solid var(--gold);
+		border-radius: 50%;
+		box-shadow: 0 2px 8px rgba(0, 0, 46, 0.5);
+	}
+
+	.pp-rule {
+		margin: 6px 0 0;
+		padding: 6px 10px;
+		margin-inline: -10px;
+		color: rgba(255, 255, 255, 0.82);
+		border-radius: 8px;
+		font-size: 13.5px;
+		line-height: 1.45;
+	}
+
+	.pp-rule.is-flash {
+		animation: pp-flash 2.4s var(--pp-ease);
+	}
+
+	@keyframes pp-flash {
+		0%,
+		70% {
+			color: var(--alalibre-navy);
+			background: var(--gold);
+		}
+		100% {
+			color: rgba(255, 255, 255, 0.82);
+			background: transparent;
+		}
+	}
+
+	/* Resumen en vivo: renglones de un recibo */
+	.pp-ledger {
+		margin: 0;
+	}
+
+	.pp-ledger > div {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 4px 0;
+	}
+
+	.pp-ledger > div[hidden] {
+		display: none;
+	}
+
+	.pp-ledger dt {
+		color: rgba(255, 255, 255, 0.88);
+		font-size: 15px;
+	}
+
+	.pp-ledger dt small {
+		color: rgba(255, 255, 255, 0.72);
+		font-size: 13px;
+	}
+
+	.pp-ledger dd {
+		margin: 0;
+		color: #ffffff;
+		font-weight: 700;
+		font-size: 17px;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+	}
+
+	.pp-blocked {
+		margin: 0;
+		color: #ffffff;
+		font-size: 14.5px;
+		line-height: 1.5;
+	}
+
+	.pp-blocked[hidden] {
+		display: none;
+	}
+
+	.pp-generate {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		min-height: 50px;
+		padding: 0 16px;
+		white-space: nowrap;
+		color: var(--alalibre-navy);
+		background: var(--gold);
+		border: 0;
+		border-radius: 999px;
+		font: inherit;
+		font-weight: 800;
+		font-size: 16px;
+		cursor: pointer;
+		transition:
+			background 0.2s ease,
+			transform 0.3s var(--pp-ease);
+	}
+
+	.pp-generate:hover:not(:disabled) {
+		background: #ecd28f;
+	}
+
+	.pp-generate:hover:not(:disabled) svg {
+		transform: translateX(3px);
+	}
+
+	.pp-generate svg {
+		transition: transform 0.3s var(--pp-ease);
+	}
+
+	.pp-generate:disabled {
+		opacity: 0.55;
+		cursor: not-allowed;
+	}
+
+	/* ---------- Resultado (derecha) ---------- */
+	.pp-result {
+		position: relative;
+		min-height: 360px;
+		padding: 24px 26px;
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid rgba(255, 255, 255, 0.16);
+		border-radius: 16px;
+	}
+
+	.pp-idle,
+	.pp-loading,
+	.pp-out {
+		height: 100%;
+	}
+
+	.pp-idle {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		max-width: 340px;
+		margin: 0 auto;
+	}
+
+	.pp-idle[hidden],
+	.pp-loading[hidden],
+	.pp-out[hidden] {
+		display: none;
+	}
+
+	.pp-idle-title {
+		margin: 0 0 28px;
+		color: rgba(255, 255, 255, 0.85);
+		font-weight: 600;
+		font-size: 16px;
+	}
+
+	/* Línea de tiempo: la misma estructura para el estado vacío y para el plan */
+	.pp-plan {
+		--line-x: 9px;
+		position: relative;
+		display: grid;
+		gap: 0;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.pp-plan::before {
+		content: '';
+		position: absolute;
+		top: 14px;
+		bottom: 14px;
+		left: var(--line-x);
+		width: 2px;
+		background: linear-gradient(180deg, var(--gold), rgba(217, 178, 106, 0.35));
+		transform-origin: top;
+	}
+
+	.pp-plan > li {
+		position: relative;
+		display: grid;
+		grid-template-columns: 20px minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 0 14px;
+		padding: 8px 0;
+	}
+
+	.pp-node {
+		position: relative;
+		z-index: 1;
+		width: 20px;
+		height: 20px;
+		background: var(--alalibre-navy);
+		border: 2px solid var(--gold);
+		border-radius: 50%;
+	}
+
+	.pp-node-dep {
+		border-color: var(--alalibre-aqua);
+	}
+
+	.pp-when {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+		min-width: 0;
+	}
+
+	.pp-when strong {
+		color: #ffffff;
+		font-weight: 700;
+		font-size: 17px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.pp-what {
+		color: rgba(255, 255, 255, 0.8);
+		font-size: 14px;
+		line-height: 1.4;
+	}
+
+	.pp-what em {
+		margin-left: 8px;
+		padding: 1px 8px;
+		color: var(--alalibre-navy);
+		background: var(--alalibre-aqua);
+		border-radius: 999px;
+		font-style: normal;
+		font-weight: 700;
+		font-size: 12px;
+		white-space: nowrap;
+	}
+
+	.pp-amt {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		color: #ffffff;
+		font-weight: 800;
+		font-size: 19px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.pp-amt small {
+		color: rgba(255, 255, 255, 0.72);
+		font-weight: 500;
+		font-size: 12.5px;
+	}
+
+	.pp-amt-plane svg {
+		width: 22px;
+		height: 22px;
+		fill: none;
+		stroke: var(--alalibre-aqua);
+		stroke-width: 1.8;
+		stroke-linejoin: round;
+	}
+
+	.pp-ghost {
+		opacity: 0.55;
+	}
+
+	.pp-ghost::before {
+		background: repeating-linear-gradient(180deg, rgba(217, 178, 106, 0.7) 0 6px, transparent 6px 12px);
+	}
+
+	.pp-ghost .pp-what {
+		font-size: 15px;
+	}
+
+	.pp-out-head h3 {
+		margin: 0 0 6px;
+		color: #ffffff;
+		font-weight: 800;
+		font-size: clamp(20px, 2vw, 24px);
+	}
+
+	.pp-out-head p {
+		margin: 0;
+		color: rgba(255, 255, 255, 0.85);
+		font-size: 14.5px;
+		line-height: 1.5;
+	}
+
+	.pp-out-head {
+		margin-bottom: 14px;
+	}
+
+	.pp-out .pp-plan {
+		margin-bottom: 8px;
+	}
+
+	.pp-out-foot {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		margin-top: 6px;
+		padding-top: 14px;
+		border-top: 1px solid rgba(255, 255, 255, 0.2);
+	}
+
+	.pp-total {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 16px;
+		color: rgba(255, 255, 255, 0.88);
+		font-size: 15px;
+		line-height: 1.3;
+	}
+
+	.pp-total strong {
+		color: var(--gold-text);
+		font-weight: 800;
+		font-size: 22px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.pp-cta {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 50px;
+		padding: 0 28px;
+		color: var(--alalibre-navy);
+		background: var(--gold);
+		border-radius: 999px;
+		text-decoration: none;
+		font-weight: 800;
+		font-size: 16px;
+		transition: background 0.2s ease;
+	}
+
+	.pp-cta:hover {
+		background: #ecd28f;
+	}
+
+	/* Carga */
+	.pp-loading {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		min-height: 420px;
+		text-align: center;
+	}
+
+	.pp-loader {
+		position: relative;
+		display: flex;
+		justify-content: space-between;
+		width: 132px;
+		margin-bottom: 18px;
+	}
+
+	.pp-loader::before {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 6px;
+		right: 6px;
+		height: 2px;
+		background: var(--gold);
+		transform-origin: left;
+		animation: pp-draw 1.4s var(--pp-ease) infinite;
+	}
+
+	.pp-loader span {
+		position: relative;
+		width: 14px;
+		height: 14px;
+		background: var(--alalibre-navy);
+		border: 2px solid var(--gold);
+		border-radius: 50%;
+		animation: pp-pulse 1.4s var(--pp-ease) infinite;
+	}
+
+	.pp-loader span:nth-child(2) {
+		animation-delay: 0.2s;
+	}
+	.pp-loader span:nth-child(3) {
+		animation-delay: 0.4s;
+	}
+	.pp-loader span:nth-child(4) {
+		animation-delay: 0.6s;
+		border-color: var(--alalibre-aqua);
+	}
+
+	@keyframes pp-draw {
+		0% {
+			transform: scaleX(0);
+		}
+		70%,
+		100% {
+			transform: scaleX(1);
+		}
+	}
+
+	@keyframes pp-pulse {
+		0%,
+		100% {
+			background: var(--alalibre-navy);
+			transform: scale(1);
+		}
+		35% {
+			background: var(--gold);
+			transform: scale(1.25);
+		}
+	}
+
+	.pp-loading-title {
+		margin: 0;
+		color: #ffffff;
+		font-weight: 800;
+		font-size: clamp(18px, 1.8vw, 22px);
+	}
+
+	.pp-loading-sub {
+		min-height: 1.5em;
+		margin: 0;
+		color: rgba(255, 255, 255, 0.8);
+		font-size: 15px;
+	}
+
+	/* Entrada del plan: la línea se dibuja y cada renglón aparece en escalera */
+	.pp-out .pp-plan::before {
+		animation: pp-line calc(var(--n, 6) * 120ms + 500ms) var(--pp-ease) both;
+	}
+
+	.pp-out .pp-plan > li {
+		animation: pp-row 0.6s var(--pp-ease) both;
+		animation-delay: calc(var(--i) * 120ms + 120ms);
+	}
+
+	.pp-out .pp-plan > li .pp-node {
+		animation: pp-node 0.5s var(--pp-ease) both;
+		animation-delay: calc(var(--i) * 120ms + 220ms);
+	}
+
+	.pp-out .pp-out-foot,
+	.pp-out .pp-out-head {
+		animation: pp-row 0.6s var(--pp-ease) both;
+	}
+
+	.pp-out .pp-out-foot {
+		animation-delay: calc(var(--n, 6) * 120ms + 200ms);
+	}
+
+	@keyframes pp-line {
+		from {
+			transform: scaleY(0);
+		}
+		to {
+			transform: scaleY(1);
+		}
+	}
+
+	@keyframes pp-row {
+		from {
+			opacity: 0;
+			transform: translateY(12px);
+			filter: blur(4px);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+			filter: blur(0);
+		}
+	}
+
+	@keyframes pp-node {
+		from {
+			background: var(--alalibre-navy);
+			transform: scale(0.6);
+		}
+		to {
+			background: var(--fill, var(--gold));
+			transform: scale(1);
+		}
+	}
+
+	.pp-out .pp-plan > li.pp-dep .pp-node {
+		--fill: var(--alalibre-aqua);
+	}
+
+	.pp-foot {
+		max-width: 1200px;
+		margin: 20px auto 0;
+		color: rgba(255, 255, 255, 0.75);
+		font-size: 13.5px;
+		text-align: center;
+	}
+
+	@media (min-width: 701px) {
+		.pp-plan > li {
+			padding: 6px 0;
+		}
+
+		.pp-when {
+			flex-direction: row;
+			align-items: baseline;
+			gap: 6px 14px;
+			flex-wrap: wrap;
+		}
+
+		.pp-when strong {
+			min-width: 104px;
+		}
+
+		.pp-amt {
+			flex-direction: row-reverse;
+			align-items: baseline;
+			gap: 14px;
+		}
+
+		.pp-amt small {
+			min-width: 4.6em;
+			text-align: right;
+		}
+
+		.pp-out-foot {
+			flex-direction: row;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		.pp-out-foot > .pp-total {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 2px;
+		}
+	}
+
+	@media (max-width: 700px) {
+		.pp {
+			padding: 32px 5vw 56px;
+		}
+
+		.pp-form {
+			padding: 24px 18px 22px;
+		}
+
+		.pp-result {
+			min-height: 0;
+			padding: 24px 18px;
+		}
+
+		.pp-row {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.pp-plan > li {
+			gap: 0 12px;
+		}
+
+		.pp-when strong {
+			font-size: 16px;
+		}
+
+		.pp-amt {
+			font-size: 17px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.pp *,
+		.pp *::before,
+		.pp *::after {
+			animation: none !important;
+			transition: none !important;
+		}
+
+		.pp-out .pp-plan > li .pp-node {
+			background: var(--fill, var(--gold));
+		}
+	}
+</style>

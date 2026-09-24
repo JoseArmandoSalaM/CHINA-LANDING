@@ -238,7 +238,21 @@ export function formatShort({ start, end }: Departure): string {
 	return a.m === b.m ? `${a.d} – ${b.d} ${b.m}` : `${a.d} ${a.m} – ${b.d} ${b.m}`;
 }
 
-export const formatPrice = (price: number) => `$${price.toLocaleString('en-US')} MXN`;
+/** Reglas del plan de pagos (sección "Reserva tu lugar"). Ajusta aquí y se actualiza el calculador. */
+export const PAYMENT_PLAN = {
+	/** Anticipo por persona, en MXN (se paga hoy, al apartar el lugar). */
+	depositPerPerson: 15000,
+	/** Porcentaje del viaje que debe quedar cubierto (anticipo + primer pago mensual). */
+	firstPaymentCoverage: 0.4,
+	/** El viaje debe quedar liquidado este número de meses antes de la salida. */
+	settleMonthsBefore: 2,
+	/** Máximo de mensualidades que se ofrece. */
+	maxMonths: 12,
+	/** Máximo de viajeros por plan. */
+	maxTravelers: 10,
+};
+
+export const formatPrice =(price: number) => `$${price.toLocaleString('en-US')} MXN`;
 
 export const whatsappLink = (text: string) =>
 	`https://api.whatsapp.com/send/?phone=522211201356&text=${encodeURIComponent(text)}&type=phone_number&app_absent=0`;
