@@ -1,5 +1,5 @@
 ---
-import { trips, formatShort, formatRange, whatsappLink, PAYMENT_PLAN } from '../data/trips';
+import { trips, formatRange, whatsappLink, PAYMENT_PLAN } from '../data/trips';
 
 // Solo se ofrecen las salidas con precio cargado.
 const planTrips = trips.map((t) => ({
@@ -10,7 +10,8 @@ const planTrips = trips.map((t) => ({
 		.filter((d) => d.priceDouble)
 		.map((d) => ({
 			start: d.start,
-			short: formatShort(d).replace(/[A-Za-zÁÉÍÓÚáéíóú]{4,}/g, (m) => m.slice(0, 3)),
+			// El rango completo (con año) abreviando los nombres de mes, para que quepa en el chip.
+			short: formatRange(d).replace(/[A-Za-zÁÉÍÓÚáéíóú]{4,}/g, (m) => m.slice(0, 3)),
 			range: formatRange(d),
 			priceDouble: d.priceDouble!,
 			priceSingle: d.priceSingle ?? null,
@@ -76,7 +77,24 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 			<div class="pp-col">
 			<div class="pp-row">
 				<fieldset class="pp-field">
-					<legend>Habitación</legend>
+					<legend class="pp-legend-row">
+						Habitación
+						<button
+							type="button"
+							class="pp-info-btn"
+							id="pp-occ-info"
+							aria-label="Qué significa ocupación doble y sencilla"
+							aria-expanded="false"
+							aria-controls="pp-occ-popover"
+						>!</button>
+					</legend>
+					<div class="pp-popover" id="pp-occ-popover" role="dialog" aria-label="Ocupación doble y sencilla" hidden>
+						<button type="button" class="pp-popover-close" id="pp-occ-popover-close" aria-label="Cerrar">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+						</button>
+						<p><strong>Doble:</strong> comparten la habitación 2 personas. El precio que ves es por persona.</p>
+						<p><strong>Sencilla:</strong> viajas solo en tu propia habitación. El precio por persona es más alto porque no se reparte el costo del cuarto.</p>
+					</div>
 					<div class="pp-seg">
 						<label class="pp-opt">
 							<input type="radio" name="occ" value="double" checked />
@@ -119,7 +137,7 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 					value={firstMonths}
 					aria-describedby="pp-rule"
 				/>
-				<p id="pp-rule" class="pp-rule">El pago debe quedar cubierto 2 meses antes de la salida.</p>
+				<p id="pp-rule" class="pp-rule">El pago debe quedar cubierto 60 días antes de la salida.</p>
 			</div>
 			</div>
 
@@ -164,7 +182,7 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 				<ol class="pp-plan pp-ghost" aria-hidden="true">
 					<li><span class="pp-node"></span><span class="pp-what">Hoy · tu anticipo</span></li>
 					<li><span class="pp-node"></span><span class="pp-what">Cada mes · tus mensualidades</span></li>
-					<li><span class="pp-node"></span><span class="pp-what">2 meses antes · viaje liquidado</span></li>
+					<li><span class="pp-node"></span><span class="pp-what">60 días antes · viaje liquidado</span></li>
 					<li><span class="pp-node pp-node-dep"></span><span class="pp-what">Salida a China</span></li>
 				</ol>
 			</div>
@@ -201,7 +219,7 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 	interface Config {
 		depositPerPerson: number;
 		firstPaymentCoverage: number;
-		settleMonthsBefore: number;
+		settleDaysBefore: number;
 		maxMonths: number;
 		maxTravelers: number;
 		trips: PlanTrip[];
@@ -237,6 +255,36 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 		const loadingSub = $('pp-loading-sub');
 		const out = $('pp-out');
 
+		// ---------- Info: qué es ocupación doble/sencilla ----------
+		const occInfoBtn = $<HTMLButtonElement>('pp-occ-info');
+		const occPopover = $('pp-occ-popover');
+		const occPopoverClose = $<HTMLButtonElement>('pp-occ-popover-close');
+
+		const closeOccInfo = () => {
+			occPopover.hidden = true;
+			occInfoBtn.setAttribute('aria-expanded', 'false');
+		};
+		const toggleOccInfo = () => {
+			const open = occPopover.hidden;
+			occPopover.hidden = !open;
+			occInfoBtn.setAttribute('aria-expanded', String(open));
+			if (open) occPopoverClose.focus();
+		};
+		occInfoBtn.addEventListener('click', toggleOccInfo);
+		occPopoverClose.addEventListener('click', () => {
+			closeOccInfo();
+			occInfoBtn.focus();
+		});
+		document.addEventListener('click', (e) => {
+			if (!occPopover.hidden && !occPopover.contains(e.target as Node) && e.target !== occInfoBtn) closeOccInfo();
+		});
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape' && !occPopover.hidden) {
+				closeOccInfo();
+				occInfoBtn.focus();
+			}
+		});
+
 		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 		const money = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
@@ -251,6 +299,11 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 			const r = new Date(date.getFullYear(), date.getMonth() + n, 1);
 			const last = new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate();
 			r.setDate(Math.min(date.getDate(), last));
+			return r;
+		};
+		const addDays = (date: Date, n: number) => {
+			const r = new Date(date);
+			r.setDate(r.getDate() + n);
 			return r;
 		};
 		const now = new Date();
@@ -271,12 +324,18 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 			return { trip, dep: trip.departures[depIdx()] };
 		};
 
-		// Última mensualidad posible: el pago debe quedar cubierto `settleMonthsBefore` meses antes de la salida.
-		const deadlineOf = (dep: Dep) => addMonths(parseISO(dep.start), -cfg.settleMonthsBefore);
+		// Última mensualidad posible: el pago debe quedar cubierto `settleDaysBefore` días antes de la salida.
+		const deadlineOf = (dep: Dep) => addDays(parseISO(dep.start), -cfg.settleDaysBefore);
+		const DAY_MS = 24 * 60 * 60 * 1000;
+		// Si entre el último mes completo y la fecha límite sobran 15 días o más, se ofrece un pago extra
+		// justo en la fecha límite (en vez de dejar esos días sin usar).
 		const maxMonthsFor = (dep: Dep) => {
 			const deadline = deadlineOf(dep);
 			let n = 0;
 			for (let i = 1; i <= cfg.maxMonths; i++) if (addMonths(today, i) <= deadline) n = i;
+			const lastFull = n > 0 ? addMonths(today, n) : today;
+			const slackDays = Math.round((deadline.getTime() - lastFull.getTime()) / DAY_MS);
+			if (slackDays >= 15 && n < cfg.maxMonths) n += 1;
 			return n;
 		};
 		const pricePerPerson = (dep: Dep) => (occupancy() === 'single' && dep.priceSingle ? dep.priceSingle : dep.priceDouble);
@@ -298,10 +357,14 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 				for (let i = 1; i < months; i++) amounts.push(base);
 				amounts[months - 1] += rest - base * (months - 1);
 			}
+			// El último pago no puede caer después de la fecha límite: si el mes completo se pasa
+			// (el pago extra por los días que sobraban), se recorta justo a esa fecha.
+			const deadline = deadlineOf(dep);
 			let cum = deposit;
 			const payments: Payment[] = amounts.map((amount, i) => {
 				cum += amount;
-				return { date: addMonths(today, i + 1), amount, cum };
+				const date = addMonths(today, i + 1);
+				return { date: date > deadline ? deadline : date, amount, cum };
 			});
 			return { total, deposit, balance, payments, next: months > 1 ? amounts[1] : 0 };
 		};
@@ -333,7 +396,7 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 				range.disabled = true;
 				blocked.hidden = false;
 				blocked.textContent =
-					'Esta salida está muy cerca para pagar en mensualidades: el viaje debe quedar liquidado 2 meses antes. Escríbenos y te ayudamos con el pago.';
+					'Esta salida está muy cerca para pagar en mensualidades: el viaje debe quedar liquidado 60 días antes. Escríbenos y te ayudamos con el pago.';
 				generate.disabled = true;
 				maxHint.textContent = '';
 				paintRange(1);
@@ -664,6 +727,7 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 	}
 
 	.pp-field {
+		position: relative;
 		min-width: 0;
 		margin: 0;
 		padding: 0;
@@ -680,6 +744,102 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 		font-size: 14px;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
+	}
+
+	.pp-legend-row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.pp-info-btn {
+		display: grid;
+		place-items: center;
+		width: 18px;
+		height: 18px;
+		padding: 0;
+		color: var(--alalibre-navy);
+		background: var(--gold);
+		border: 0;
+		border-radius: 50%;
+		font-family: Georgia, serif;
+		font-weight: 800;
+		font-size: 12px;
+		text-transform: none;
+		letter-spacing: 0;
+		line-height: 1;
+		cursor: pointer;
+		transition: background 0.2s ease;
+	}
+
+	.pp-info-btn:hover {
+		background: #ecd28f;
+	}
+
+	.pp-popover {
+		position: absolute;
+		z-index: 5;
+		top: calc(100% + 8px);
+		left: 0;
+		width: min(280px, calc(100vw - 60px));
+		padding: 14px 16px;
+		background: #1a1a3d;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: 12px;
+		box-shadow: 0 16px 40px rgba(0, 0, 20, 0.5);
+	}
+
+	.pp-popover[hidden] {
+		display: none;
+	}
+
+	.pp-popover p {
+		margin: 0 0 8px;
+		color: rgba(255, 255, 255, 0.9);
+		font-weight: 400;
+		font-size: 13px;
+		letter-spacing: normal;
+		text-transform: none;
+		line-height: 1.5;
+	}
+
+	.pp-popover p:last-child {
+		margin-bottom: 0;
+	}
+
+	.pp-popover strong {
+		color: var(--gold-text);
+	}
+
+	.pp-popover-close {
+		position: absolute;
+		top: 8px;
+		right: 8px;
+		display: grid;
+		place-items: center;
+		width: 22px;
+		height: 22px;
+		padding: 0;
+		color: rgba(255, 255, 255, 0.7);
+		background: transparent;
+		border: 0;
+		border-radius: 50%;
+		cursor: pointer;
+		transition: background 0.2s ease, color 0.2s ease;
+	}
+
+	.pp-popover-close:hover {
+		color: #ffffff;
+		background: rgba(255, 255, 255, 0.12);
+	}
+
+	.pp-popover-close svg {
+		width: 14px;
+		height: 14px;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2.2;
+		stroke-linecap: round;
 	}
 
 	.pp-row {

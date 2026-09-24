@@ -244,8 +244,8 @@ export const PAYMENT_PLAN = {
 	depositPerPerson: 15000,
 	/** Porcentaje del viaje que debe quedar cubierto (anticipo + primer pago mensual). */
 	firstPaymentCoverage: 0.4,
-	/** El viaje debe quedar liquidado este número de meses antes de la salida. */
-	settleMonthsBefore: 2,
+	/** El viaje debe quedar liquidado este número de días antes de la salida. */
+	settleDaysBefore: 60,
 	/** Máximo de mensualidades que se ofrece. */
 	maxMonths: 12,
 	/** Máximo de viajeros por plan. */
