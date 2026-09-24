@@ -92,8 +92,8 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 						<button type="button" class="pp-popover-close" id="pp-occ-popover-close" aria-label="Cerrar">
 							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
 						</button>
-						<p><strong>Doble:</strong> comparten la habitación 2 personas. El precio que ves es por persona.</p>
-						<p><strong>Sencilla:</strong> viajas solo en tu propia habitación. El precio por persona es más alto porque no se reparte el costo del cuarto.</p>
+						<p><strong>Doble:</strong> 2 personas comparten el cuarto; el precio es por persona.</p>
+						<p><strong>Sencilla:</strong> viajas solo; el precio por persona es más alto porque no se comparte el costo del cuarto.</p>
 					</div>
 					<div class="pp-seg">
 						<label class="pp-opt">
@@ -260,12 +260,24 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 		const occPopover = $('pp-occ-popover');
 		const occPopoverClose = $<HTMLButtonElement>('pp-occ-popover-close');
 
+		// Posición en pantalla (no relativa a la tarjeta): así nunca se encima con otros controles
+		// sin importar el tamaño de la tarjeta o el ancho de pantalla.
+		const placeOccPopover = () => {
+			const rect = occInfoBtn.getBoundingClientRect();
+			const width = occPopover.offsetWidth || 260;
+			let left = rect.left;
+			if (left + width > window.innerWidth - 16) left = window.innerWidth - width - 16;
+			if (left < 16) left = 16;
+			occPopover.style.left = `${left}px`;
+			occPopover.style.top = `${rect.bottom + 8}px`;
+		};
 		const closeOccInfo = () => {
 			occPopover.hidden = true;
 			occInfoBtn.setAttribute('aria-expanded', 'false');
 		};
 		const toggleOccInfo = () => {
 			const open = occPopover.hidden;
+			if (open) placeOccPopover();
 			occPopover.hidden = !open;
 			occInfoBtn.setAttribute('aria-expanded', String(open));
 			if (open) occPopoverClose.focus();
@@ -284,6 +296,14 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 				occInfoBtn.focus();
 			}
 		});
+		// Al hacer scroll el popover (position:fixed) se quedaría "flotando" lejos del botón: mejor cerrarlo.
+		window.addEventListener(
+			'scroll',
+			() => {
+				if (!occPopover.hidden) closeOccInfo();
+			},
+			{ passive: true }
+		);
 
 		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -727,7 +747,6 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 	}
 
 	.pp-field {
-		position: relative;
 		min-width: 0;
 		margin: 0;
 		padding: 0;
@@ -746,7 +765,7 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 		text-transform: uppercase;
 	}
 
-	.pp-legend-row {
+	.pp-field legend.pp-legend-row {
 		display: flex;
 		align-items: center;
 		gap: 8px;
@@ -777,12 +796,12 @@ const coveragePct = Math.round(PAYMENT_PLAN.firstPaymentCoverage * 100);
 	}
 
 	.pp-popover {
-		position: absolute;
-		z-index: 5;
-		top: calc(100% + 8px);
-		left: 0;
-		width: min(280px, calc(100vw - 60px));
-		padding: 14px 16px;
+		/* Fixed (no absolute): la posición la calcula JS según dónde está el botón en pantalla,
+		   así nunca se encima con otros controles sin importar el tamaño de la tarjeta. */
+		position: fixed;
+		z-index: 50;
+		width: min(260px, calc(100vw - 32px));
+		padding: 12px 30px 12px 14px;
 		background: #1a1a3d;
 		border: 1px solid rgba(255, 255, 255, 0.2);
 		border-radius: 12px;
